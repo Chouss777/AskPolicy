@@ -115,7 +115,7 @@ Exactly five families have at least one superseded document. **20 + 6 = 26**.
 
 ### Canonical document contract
 
-Use Markdown with validated YAML front matter. Required fields:
+Use Markdown with validated YAML front matter. Every policy document must contain the keys below, as required by `AGENTS.md` §5.
 
 | Field | Definition |
 |---|---|
@@ -126,13 +126,20 @@ Use Markdown with validated YAML front matter. Required fields:
 | `title` | Policy title. |
 | `department` | Policy owner department. |
 | `classification` | One of `PUBLIC`, `INTERNAL`, `RESTRICTED`. |
-| `allowed_roles` | Explicit allowed read roles. |
-| `effective_date` | Effective date. |
-| `expires_at` | Optional expiration date. |
-| `supersedes` | Optional previous `document_id`. |
+| `allowed_roles` | Explicit allowed read roles. Must be non-null. |
+| `effective_date` | Effective date. Must be non-null. |
+| `expires_at` | Expiration date or `null` when no expiration applies. |
+| `supersedes` | Previous `document_id` or `null` when there is no superseded document. |
 | `approval_status` | Approved or not-approved state. |
 | `source_type` | Synthetic policy provenance. |
 | `source_license` | Redistribution license/provenance terms. |
+
+Omitting either `expires_at` or `supersedes` is invalid. When neither applies, both keys have explicit YAML `null` values.
+
+```yaml
+expires_at: null
+supersedes: null
+```
 
 Missing or malformed security fields cause ingestion failure. Missing `allowed_roles` never means “all roles”. Unknown classifications are rejected.
 
@@ -380,9 +387,11 @@ Acceptance: no unauthorized chunks returned, no unauthorized citations exposed, 
 
 ## 13. Observability and Reproducibility
 
-Every evaluated request should record safe operational metadata: request ID, active role, language, snapshot, retrieval configuration, status, result count, validation outcome, retrieval/rerank/generation/validation durations, total latency.
+Operational logs are subject to `AGENTS.md` §11. Limit them to bounded, non-sensitive values for `request_id`, `active_role`, `corpus_snapshot_id`, `response_status`, `validation_status`, and pipeline latency measurements.
 
-Never log raw JWTs, passwords, signing secrets, full prompts, restricted chunks, or confidential answer payloads.
+Never log raw JWTs, passwords, signing secrets, complete prompts, restricted chunk text, or confidential answer payloads, including sensitive generated answers.
+
+For each evaluated request, record the bounded request metadata, `query_language`, `retrieval_config`, result count, and per-stage timings in evaluation artifacts under `AGENTS.md` §14. Evaluation artifacts may also contain `query_id`, dataset and configuration hashes, aggregate metrics, per-case metric values, model revisions, and hardware information. Use only synthetic policies, identities, and queries in these artifacts.
 
 Evaluation manifests must record Git commit, Python version, lockfile state, corpus/dataset hashes, embedding/reranker revisions, Ollama digest, generation parameters, relevant random seeds, hardware/VRAM/RAM, evaluation time and commands. Label deterministic tests, retrieval metrics, semantic reviews, attack results, and measured latency distinctly.
 
@@ -434,10 +443,14 @@ Do not reorder these eight phases:
 
 | Week | Work | Evidence to pass |
 |---|---|---|
-| 1 | Contract, sample corpus, ingestion, development BM25 baseline | Validated corpus, stable snapshot hash, baseline metric. |
+| 1 | Contract, sample corpus, ingestion, offline development BM25 smoke test | Validated corpus, stable snapshot hash, baseline metric. |
 | 2 | JWT/RBAC, authorized index selection, BM25/FAISS integration | Auth/grant/default-deny tests green; role-scoped retrieval underway. |
 | 3 | RRF/reranker study, Ollama, citation/refusal flow | Four retrieval configurations, passing ACL and citation tests. |
 | 4 | Full evaluation, deployment, CI, report, demo | Held-out and security results, clean setup, publishable materials. |
+
+The Week 1 BM25 baseline is an isolated, offline evaluation smoke test that uses development cases and only validated, publicly accessible corpus evidence. Run it without exposing a retrieval API or granting document access.
+
+The eight phases proceed in the order specified in §15. Production retrieval integration in Phase 5 begins only after Phase 4 authentication and RBAC are fully implemented and the Phase 4 exit criteria pass.
 
 The measured Week 1 gate in §17 is mandatory and takes precedence over the full-scope target when triggered.
 
