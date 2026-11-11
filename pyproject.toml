@@ -1,0 +1,21 @@
+[project]
+name = "askpolicy"
+version = "0.1.0"
+description = "Secure multilingual enterprise RAG"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "bm25s",
+    "faiss-cpu",
+    "fastapi",
+    "pwdlib[argon2]",
+    "pydantic>=2,<3",
+    "PyJWT",
+    "streamlit",
+    "uvicorn",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false
