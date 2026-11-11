@@ -1,0 +1,23 @@
+services: # Phase 8 service stubs
+  api: # Phase 8 API service stub
+    image: askpolicy-api:phase8-placeholder # Phase 8 API image stub
+    ports:
+      - "8000:8000" # Phase 8 API port wiring stub
+    volumes:
+      - app_data:/app/data # Phase 8 application data wiring stub
+      - indexes:/app/indexes # Phase 8 index storage wiring stub
+  ui: # Phase 8 UI service stub
+    image: askpolicy-ui:phase8-placeholder # Phase 8 UI image stub
+    ports:
+      - "8501:8501" # Phase 8 UI port wiring stub
+  ollama: # Phase 8 Ollama service stub
+    image: ollama/ollama:phase8-placeholder # Phase 8 Ollama image stub
+    ports:
+      - "11434:11434" # Phase 8 Ollama port wiring stub
+    volumes:
+      - ollama_models:/root/.ollama # Phase 8 model storage wiring stub
+
+volumes: # Phase 8 named volume declarations
+  app_data: # Phase 8 application data volume stub
+  indexes: # Phase 8 index volume stub
+  ollama_models: # Phase 8 model volume stub
