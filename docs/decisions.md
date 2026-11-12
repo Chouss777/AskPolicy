@@ -4,7 +4,7 @@
 **Project:** AskPolicy — Secure Multilingual Enterprise RAG  
 **Status:** LOCKED  
 **Owner:** Solo project developer  
-**Timebox:** Four weeks  
+**Planning estimate:** Four weeks\
 **Goal:** A reproducible, security-aware Applied AI / LLM Engineering portfolio project for PFE applications.
 
 ---
@@ -274,9 +274,10 @@ Security acceptance on executed tests: **zero unauthorized chunks, zero unauthor
 
 **Split:** 20 development + 60 frozen held-out cases. Keep paired questions within one split.
 
-### Reduced scope — if the Week 1 contingency activates
+### Reduced scope — if the owner approves the fallback
 
-If `docs/decisions.md` §17 activates the reduction, evaluation becomes **60 query-role cases**:
+If the project owner approves the reduced scope under §17, evaluation uses **60 query-role cases**.
+
 - 36 answerable.
 - 12 unanswerable.
 - 12 role-sensitive executions (= six authorized/unauthorized pairs).
@@ -440,37 +441,46 @@ Do not reorder these eight phases:
 
 ---
 
-## 16. Four-Week Delivery Gates
+## 16. Four-Week Delivery Estimate
 
-| Week | Work | Evidence to pass |
+Four weeks is a planning estimate. A phase can advance once its measurable acceptance criteria pass, in the order specified in §15. Calendar dates neither delay progression nor trigger changes to scope.
+
+| Estimated week | Work | Acceptance evidence |
 |---|---|---|
 | 1 | Contract, sample corpus, ingestion, offline development BM25 smoke test | Validated corpus, stable snapshot hash, baseline metric. |
 | 2 | JWT/RBAC, authorized index selection, BM25/FAISS integration | Auth/grant/default-deny tests green; role-scoped retrieval underway. |
 | 3 | RRF/reranker study, Ollama, citation/refusal flow | Four retrieval configurations, passing ACL and citation tests. |
 | 4 | Full evaluation, deployment, CI, report, demo | Held-out and security results, clean setup, publishable materials. |
 
-The Week 1 BM25 baseline is an isolated, offline evaluation smoke test that uses development cases and only validated, publicly accessible corpus evidence. Run it without exposing a retrieval API or granting document access.
+The development BM25 baseline is an isolated, offline evaluation smoke test that uses development cases and only validated, publicly accessible corpus evidence. Run it without exposing a retrieval API or granting document access.
 
 The eight phases proceed in the order specified in §15. Production retrieval integration in Phase 5 begins only after Phase 4 authentication and RBAC are fully implemented and the Phase 4 exit criteria pass.
 
-The measured Week 1 gate in §17 is mandatory and takes precedence over the full-scope target when triggered.
+The measured retrieval-readiness milestone in §17 is mandatory before Phase 5 closes.
 
 ---
 
-## 17. Week 1 Contingency — Measured Gate
+## 17. Retrieval Readiness and Optional Scope Fallback
 
-At the **end of Week 1**, inspect three objective conditions:
+**Owner decision (Step 59).** The project owner approved milestone-based progression. This supersedes the former end-of-Week-1 rule that automatically reduced scope when any of the three measurements failed. The measurement thresholds remain mandatory.
+
+### Retrieval-readiness milestone
+
+Verify all three conditions before closing the retrieval-readiness milestone in Phase 5.
+
 1. **At least 20 documents have been ingested and validated.**
 2. **The snapshot hash is reproducible across clean runs.**
 3. **A development-set BM25 baseline exists with Recall@5 strictly greater than 0.**
 
-If **any** condition fails, immediately activate the reduced scope. There is no subjective override. Document the active scope in the evaluation/configuration manifests.
+Collect the ingestion count and clean-build snapshot hashes in Phase 3 once ingestion and snapshot construction can run. Measure the isolated development BM25 baseline once its prerequisites are available, using the offline setup in §16. Record the actual results. Phase 2 retains its source-corpus exit criteria under §15, and Phase 4 authentication and RBAC remain prerequisites for production retrieval integration.
 
-### Full scope if all gates pass
+### Authorized full scope
 
-Eight families; four Arabic families; 26 documents; 80 eval cases; 20 dev + 60 held-out.
+Full scope remains authorized. It covers eight families in French and English and four families in Arabic, with 26 source documents (20 active and six superseded) and 80 query-role executions (20 development and 60 frozen held-out).
 
-### Reduced scope if any gate fails
+### Optional reduced-scope fallback
+
+A failed measurement leaves the readiness milestone open. Full scope stays active until the project owner explicitly approves a scope change. In addition to the governance in §18, a reduction requires objective evidence of a blocker, a proposed scope-change record with an impact analysis, explicit project-owner approval, and preservation of all security, evaluation, and reproducibility safeguards. Record the approved decision and active scope in the evaluation/configuration manifests.
 
 Drop **Procurement** and **Incident Reporting**. Keep Remote Work, Leave, Expenses, Travel, Access Control, Data Handling (six families).
 
@@ -484,7 +494,7 @@ Evaluation: **36 answerable + 12 unanswerable + 12 role-sensitive executions (6 
 
 JWT verification; deterministic RBAC; role-scoped retrieval; deny-by-default ACL; citation integrity; controlled refusal; complete security adversarial scenarios; BM25; FAISS; RRF; conditional reranker evaluation; four-way retrieval ablation; end-to-end evaluation; reproduction evidence; Docker delivery.
 
-The contingency reduces corpus/language/label breadth, not security or verification depth. Adapt dataset counts in acceptance checks to the active scope.
+The fallback reduces corpus, language, and label breadth while preserving security and verification depth. Adapt dataset counts in acceptance checks to the active scope.
 
 ---
 

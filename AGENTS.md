@@ -226,7 +226,7 @@ Enforcement: `tests/integration/test_compose_contract.py`, `tests/integration/te
 - 16 role-sensitive executions (= eight authorized/unauthorized pairs).
 - 20 development cases, 60 frozen held-out cases.
 
-**Reduced scope:** If the mandatory Week 1 contingency activates (see `docs/decisions.md` §17), use **60 cases**: 36 answerable + 12 unanswerable + 12 role-sensitive executions (= six pairs), divided into **15 development + 45 frozen held-out** cases. Keep all security tests, citation-validation requirements, retrieval ablations, and security acceptance thresholds unchanged.
+**Reduced scope:** If the project owner explicitly approves the optional fallback under `docs/decisions.md` §17, use **60 cases**: 36 answerable + 12 unanswerable + 12 role-sensitive executions (= six pairs), divided into **15 development + 45 frozen held-out** cases. Keep all security tests, citation-validation requirements, retrieval ablations, and security acceptance thresholds unchanged.
 
 Keep related question-role pairs in the same split. Select configurations using **development cases only**, then freeze and report on held-out cases without re-tuning to test outcomes. Manually verify labels and source passages.
 
@@ -299,7 +299,7 @@ Do not reorder:
 7. **Full evaluation:** query cases, ablations, security attacks, metrics, error analysis.
 8. **Delivery:** Docker Compose, Streamlit, CI, README, report, demo video.
 
-Current-phase acceptance gates must pass before advancing. Future-phase tests may be marked incomplete but not reported as passing; no skipped or xfailed release-critical tests. Apply the measured Week 1 contingency in `docs/decisions.md` §17 exactly.
+Current-phase acceptance gates must pass before advancing. Future-phase tests may be marked incomplete but not reported as passing; no skipped or xfailed release-critical tests. Treat calendar estimates as planning guidance. Apply the measured retrieval-readiness milestone and owner-approved scope-change procedure in `docs/decisions.md` §17.
 
 Enforcement: phase-specific tests in `docs/decisions.md` §11 and human review using `docs/codex-checklist.md`.
 
