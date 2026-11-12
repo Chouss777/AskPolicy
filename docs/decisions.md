@@ -116,6 +116,7 @@ Exactly five families have at least one superseded document. **20 + 6 = 26**.
 ### Canonical document contract
 
 Use Markdown with validated YAML front matter. Every policy document must contain the keys below, as required by `AGENTS.md` §5.
+Filename convention: `<document_id>.md` — enforced by `tests/integration/test_corpus_seed.py`.
 
 | Field | Definition |
 |---|---|
