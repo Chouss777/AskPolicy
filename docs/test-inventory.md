@@ -23,7 +23,7 @@ The three Phase 1 entries have meaningful tests. Repository contract coverage is
 | Retrieval ablation | `tests/eval/test_ablation.py` | 5 — pending |
 | End-to-end | `tests/eval/test_e2e.py` | 7 — pending |
 | Streamlit cache isolation | `tests/integration/test_ui_cache_isolation.py` | 8 — pending |
-| Corpus manifest | `tests/integration/test_corpus_manifest.py` | 2 — pending |
+| Corpus manifest | `tests/integration/test_corpus_manifest.py` | 2 — implemented |
 | Parent-child structure | `tests/integration/test_chunk_boundaries.py` | 3 — pending |
 | Policy validity | `tests/integration/test_version_selection.py` | 3 — pending |
 | Atomic publication | `tests/integration/test_snapshot_publication.py` | 5 — pending |
