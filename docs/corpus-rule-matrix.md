@@ -1,6 +1,6 @@
 # Corpus Rule Matrix
 
-This working registry tracks Batch 1 consistency for the fictional Atlas Services corpus. The corpus, versioning, and authorization contracts remain in `docs/decisions.md` §§3–4 and §6.
+This working registry tracks consistency across the active language versions for the fictional Atlas Services corpus. The corpus, versioning, and authorization contracts remain in `docs/decisions.md` §§3–4 and §6.
 
 ## A. Established rules in the four source policies
 
@@ -29,6 +29,32 @@ This working registry tracks Batch 1 consistency for the fictional Atlas Service
 | Expenses dual approval | If estimated operational purchases exceed 1,000 MAD, both the line manager and Finance must approve before the expense is committed. | EXPENSES-001-AR-V2 §4 « المراجعة والموافقة » |
 | Expenses reimbursement review | The manager checks business purpose and cost center. Finance checks evidence, applicable caps, and prior reimbursement. Eligible amounts are reimbursed at actual cost within applicable caps after review. Incomplete lines stay on hold while complete lines remain in review. | EXPENSES-001-AR-V2 §§4–5 « المراجعة والموافقة », « شروط صرف التعويض » |
 | Expenses receipt exception | If the original receipt cannot be obtained, Finance may accept a supplier-issued copy with proof of payment and an explanation. If alternative evidence cannot be completed, the line stays on hold and the employee can request a recorded review by the Finance lead. | EXPENSES-001-AR-V2 §6 « الاستثناءات والتصعيد » |
+| Leave planned request across languages | For planned leave, the employee submits the requested dates at least five working days before departure. Confidential supporting documents go directly to HR. | LEAVE-001-FR-V2 §2 « Dépôt et traitement de la demande » and LEAVE-001-EN-V2 §2 “Request submission and processing” and LEAVE-001-AR-V2 §2 « تقديم الطلب ومعالجته » |
+| Leave processing across languages | HR checks dates and balance, asks for missing information, records the decision, and notifies the employee. The line manager evaluates service continuity. The request is pending until notification. | LEAVE-001-FR-V2 §§1–2 « Objet et périmètre RH », « Dépôt et traitement de la demande » and LEAVE-001-EN-V2 §1 “Purpose and HR scope” and LEAVE-001-EN-V2 §2 “Request submission and processing” and LEAVE-001-AR-V2 §1 « الهدف ونطاق عمل الموارد البشرية » and LEAVE-001-AR-V2 §2 « تقديم الطلب ومعالجته » |
+| Leave duration validation across languages | If ordinary leave exceeds five consecutive working days, the line manager confirms service continuity and HR validates the balance before notifying approval. | LEAVE-001-FR-V2 §3 « Validation du congé » and LEAVE-001-EN-V2 §3 “Leave validation” and LEAVE-001-AR-V2 §3 « الموافقة على الإجازة » |
+| Leave balance and scheduling across languages | HR asks for revised dates if the balance is insufficient. For scheduling conflicts, the manager sends constraints and alternatives to HR. HR communicates the decision and options to reschedule. | LEAVE-001-FR-V2 §3 « Validation du congé » and LEAVE-001-EN-V2 §3 “Leave validation” and LEAVE-001-AR-V2 §3 « الموافقة على الإجازة » |
+| Leave confidentiality across languages | HR alone may access the processing register, individual balances, and supporting documents. Managers receive dates and status for coverage. Requesters receive their own decision and next steps. Misrouted documents go to HR via the confidential channel, and shared schedules omit detailed medical and family reasons. | LEAVE-001-FR-V2 §4 « Confidentialité et informations communiquées » and LEAVE-001-EN-V2 §4 “Confidentiality and information sharing” and LEAVE-001-AR-V2 §4 « السرية والمعلومات التي يجوز إبلاغها » |
+| Leave family emergency across languages | HR may authorize a family-emergency absence without prior manager validation and communicates coverage dates to the manager. The employee regularizes the request within two working days after return. | LEAVE-001-FR-V2 §5 « Exceptions et escalade » and LEAVE-001-EN-V2 §5 “Exceptions and escalation” and LEAVE-001-AR-V2 §5 « الاستثناءات والتصعيد » |
+| Leave review across languages | The employee may contest a balance or decision with HR leadership, which reviews the case and records its decision in the HR-only register. | LEAVE-001-FR-V2 §5 « Exceptions et escalade » and LEAVE-001-EN-V2 §5 “Exceptions and escalation” and LEAVE-001-AR-V2 §5 « الاستثناءات والتصعيد » |
+| Remote Work approval | The line manager may approve up to two remote-work days per week in advance if the tasks and service coverage allow it. Employees wait for approval. | REMOTE-001-FR-V2 §2 « Demande et autorisation » and REMOTE-001-EN-V2 §2 “Requests and authorization” and REMOTE-001-AR-V2 §2 « تقديم الطلب والموافقة عليه » |
+| Remote Work records | HR records approved arrangements and changes. Changes follow the same procedure before taking effect. | REMOTE-001-FR-V2 §3 « Suivi des modalités approuvées » and REMOTE-001-EN-V2 §3 “Tracking approved arrangements” and REMOTE-001-AR-V2 §3 « متابعة الترتيبات المعتمدة » |
+| Remote Work data protection | Use approved work tools, storage and transfer channels. Limit sharing to authorized recipients and report incidents under Incident Reporting. | REMOTE-001-FR-V2 §4 « Travail à distance et protection des données » and REMOTE-001-EN-V2 §4 “Remote work and data protection” and REMOTE-001-AR-V2 §4 « العمل عن بُعد وحماية البيانات » |
+| Remote Work exception and interruption | A temporary need may justify exceeding two remote-work days per week only with manager approval and documented HR review before implementation. If interrupted, notify the manager and agree on an alternative that meets service needs. | REMOTE-001-FR-V2 §5 « Exceptions et interruptions » and REMOTE-001-EN-V2 §5 “Exceptions and interruptions” and REMOTE-001-AR-V2 §5 « الاستثناءات وحالات الانقطاع » |
+| Access Control approval | Document the need and scope. Manager validation and IT Security approval are required before access is granted. | ACCESS-001-FR-V2 §2 « Validation des demandes » and ACCESS-001-EN-V2 §2 “Request validation” |
+| Access Control least privilege and expiry | Limit access to necessary resources and duration. Record the temporary end date and remove access at expiry. | ACCESS-001-FR-V2 §3 « Attribution au moindre privilège » and ACCESS-001-EN-V2 §3 “Least-privilege grants” |
+| Access Control review and revocation | Review access on role changes and at scheduled reviews. Remove unnecessary rights and revoke access when a departure takes effect. | ACCESS-001-FR-V2 §4 « Revue et révocation » and ACCESS-001-EN-V2 §4 “Review and revocation” |
+| Access Control urgent or disputed requests | Prioritize urgent temporary requests only with manager validation and IT Security approval before granting. Document the approval, scope and expiry. Disputed grants remain suspended during review. | ACCESS-001-FR-V2 §5 « Exceptions et suivi » and ACCESS-001-EN-V2 §5 “Exceptions and follow-up” |
+| Data Handling classification and sharing | Check the business need and recipient authorization. Classification grants no access. Share the minimum necessary through approved channels and suspend sharing while recipient authorization is unknown. | DATA-001-FR-V2 §2 « Classification et partage » and DATA-001-EN-V2 §2 “Classification and sharing” and DATA-001-AR-V2 §2 « التصنيف والمشاركة » |
+| Data Handling storage and external transfers | Use approved storage and transfer channels. Check the recipient and attachments before sending. External transfer requires the data owner's and IT Security's approval before sending. | DATA-001-FR-V2 §3 « Stockage et transfert » and DATA-001-EN-V2 §3 “Storage and transfer” and DATA-001-AR-V2 §3 « التخزين والنقل » |
+| Data Handling accidental disclosure | Promptly report a suspected disclosure to IT Security, giving the channel, time, and data category without redistributing affected data. | DATA-001-FR-V2 §4 « Divulgation accidentelle » and DATA-001-EN-V2 §4 “Accidental disclosure” and DATA-001-AR-V2 §4 « الإفصاح العرضي » |
+| Data Handling channel exception | The data owner and IT Security may approve another authorized channel before transfer and record the reason, duration, and channel. Recipient restrictions still apply. Suspend transfer when no authorized channel is available. | DATA-001-FR-V2 §5 « Exceptions et escalade » and DATA-001-EN-V2 §5 “Exceptions and escalation” and DATA-001-AR-V2 §5 « الاستثناءات والتصعيد » |
+| Incident Reporting channel | Report suspected incidents promptly. Use the designated IT Security channel and report observed facts, timing, affected service or equipment, and steps taken. | INCIDENT-001-FR-V1 §1 « Objet et situations à signaler » and INCIDENT-001-FR-V1 §2 « Modalités de signalement » and INCIDENT-001-EN-V1 §1 “Purpose and situations to report” and INCIDENT-001-EN-V1 §2 “Reporting procedure” |
+| Incident Reporting triage and evidence | IT Security assesses impact and urgency. Preserve original evidence and use approved channels. Obtain IT Security approval before restoration that could alter evidence. | INCIDENT-001-FR-V1 §3 « Triage initial » and INCIDENT-001-FR-V1 §4 « Conservation des éléments utiles » and INCIDENT-001-EN-V1 §3 “Initial triage” and INCIDENT-001-EN-V1 §4 “Evidence preservation” |
+| Incident Reporting channel exception | When the designated channel is unavailable, use an approved internal alternative to notify the line manager for prompt relay to IT Security. Escalate changes that increase impact or urgency. | INCIDENT-001-FR-V1 §5 « Exceptions et escalade » and INCIDENT-001-EN-V1 §5 “Exceptions and escalation” |
+| Procurement commitment and reapproval | Document the request, budget approval, quote, supplier terms, and supplier selection. Finance approves the purchase order before commitment. Changes to price or scope return to the budget owner and Finance before confirmation. | PROCUREMENT-001-FR-V1 §2 « Demande et autorisation budgétaire » and PROCUREMENT-001-EN-V1 §2 “Requests and budget authorization” |
+| Procurement separate duties | Separate requesting, approving, ordering, and recording receipt. Reconcile the purchase order, delivery, and invoice. | PROCUREMENT-001-FR-V1 §3 « Séparation des responsabilités » and PROCUREMENT-001-EN-V1 §3 “Separation of responsibilities” |
+| Procurement mixed payments | Company-paid and employee-paid lines follow their respective Procurement and Expenses approvals. A purchase order does not waive Expenses approval, and each line uses only one payment route. | PROCUREMENT-001-FR-V1 §4 « Achats mêlant commande et avance personnelle » and PROCUREMENT-001-EN-V1 §4 “Purchases involving an order and an employee advance” |
+| Procurement urgency | The budget owner and Finance may prioritize a documented urgent request. Required approvals and the approved purchase order still precede commitment. Wait for Finance to resolve disputes before commitment. | PROCUREMENT-001-FR-V1 §5 « Exceptions et escalade » and PROCUREMENT-001-EN-V1 §5 “Exceptions and escalation” |
 
 ## B. Fictional rules introduced in Batch 1
 
@@ -43,17 +69,20 @@ This working registry tracks Batch 1 consistency for the fictional Atlas Service
 
 ## C. Pending documents and rules
 
-- Active English versions still due are Remote Work V2, Access Control V2, Data Handling V2, Incident Reporting V1, and Procurement V1.
-- Active Arabic versions still due are Remote Work V2, Leave V2, and Data Handling V2.
-- Future Remote Work EN and AR V2 must preserve the two-day weekly baseline, prior manager approval, HR records, data-handling obligations, and documented HR review of exceptions. Other translations should preserve their established family rules and access restrictions.
-- The six historical versions are still due. Their historical rules and metadata require review when authored.
+The 20 active versions are present. The six historical versions are still due. Their historical rules and metadata require review when authored.
 
 ## D. Version relationships and pending predecessors
 
-- `REMOTE-001-FR-V2` → `REMOTE-001-FR-V1`, `EXPENSES-001-FR-V2` → `EXPENSES-001-FR-V1`, `ACCESS-001-FR-V2` → `ACCESS-001-FR-V1`, and `DATA-001-FR-V2` → `DATA-001-FR-V1` are intentional Batch 3 links.
-- The existing `LEAVE-001-FR-V2` → `LEAVE-001-FR-V1` link is also pending Batch 3. All five linked predecessor files are absent at this point.
-- Remote Work EN V1 is the sixth historical slot and its corresponding active English document is still pending.
-- Leave EN V2 and Expenses EN and AR V2 have literal `supersedes: null`. The locked inventory defines no predecessor in those languages.
+These six same-language predecessor links are intentional and remain unresolved until Batch 3.
+
+- `REMOTE-001-FR-V2` → `REMOTE-001-FR-V1`
+- `REMOTE-001-EN-V2` → `REMOTE-001-EN-V1`
+- `LEAVE-001-FR-V2` → `LEAVE-001-FR-V1`
+- `EXPENSES-001-FR-V2` → `EXPENSES-001-FR-V1`
+- `ACCESS-001-FR-V2` → `ACCESS-001-FR-V1`
+- `DATA-001-FR-V2` → `DATA-001-FR-V1`
+
+The other active versions have literal `supersedes: null`. The locked inventory defines no predecessor for those policy/language pairs.
 
 ## E. Document identities and ACLs
 
@@ -71,6 +100,14 @@ This working registry tracks Batch 1 consistency for the fictional Atlas Service
 | `PROCUREMENT-001-FR-V1` | `PROCUREMENT-001` | `fr` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
 | `LEAVE-001-EN-V2` | `LEAVE-001` | `en` | 2 | `RESTRICTED` | `[hr]` | `null` |
 | `EXPENSES-001-EN-V2` | `EXPENSES-001` | `en` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `REMOTE-001-EN-V2` | `REMOTE-001` | `en` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `REMOTE-001-EN-V1` |
+| `ACCESS-001-EN-V2` | `ACCESS-001` | `en` | 2 | `RESTRICTED` | `[it_security]` | `null` |
+| `DATA-001-EN-V2` | `DATA-001` | `en` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `INCIDENT-001-EN-V1` | `INCIDENT-001` | `en` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `PROCUREMENT-001-EN-V1` | `PROCUREMENT-001` | `en` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `REMOTE-001-AR-V2` | `REMOTE-001` | `ar` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `LEAVE-001-AR-V2` | `LEAVE-001` | `ar` | 2 | `RESTRICTED` | `[hr]` | `null` |
+| `DATA-001-AR-V2` | `DATA-001` | `ar` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
 
 ## F. Cross-policy distinctions and exceptions
 
@@ -84,3 +121,4 @@ This working registry tracks Batch 1 consistency for the fictional Atlas Service
 - Review Leave FR/EN and Expenses AR/FR/EN side by side for faithful deadlines, approval conditions, documentation, exceptions, and access boundaries.
 - Review the new French workflow rules and confirm the Procurement and Expenses boundary for mixed transactions. Confirm that broadly readable policies contain no restricted procedural detail.
 - Review the expanded set of authorized evidence for development candidates before freezing. Candidate `dev-candidate-005` retains its documented revalidation obligation.
+- Review Batch 2 counterparts against the cited sections, including Arabic distinctions between a minimum notice period and a duration that must be exceeded, French and Arabic terms for service coverage, and whether the translations preserve approval authority, temporary exceptions, and restricted disclosure. Automated checks cover selected clauses and access metadata. Independent bilingual review remains pending.

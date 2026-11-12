@@ -583,7 +583,13 @@ def _synthetic_policy(slot, *, document_id=None, **overrides):
     return {Path(language) / f"{document_id}.md": (fields, "## 1. Fixture section\n")}
 
 
-def test_authorized_active_addition_can_use_block_roles(tmp_path, corpus):
+@pytest.fixture
+def batch_one_corpus():
+    paths = (_policy_path(document_id) for document_id in sorted(REQUIRED_IDS))
+    return {path.relative_to(POLICY_ROOT): _read_policy(path) for path in paths}
+
+
+def test_authorized_active_addition_can_use_block_roles(tmp_path, batch_one_corpus):
     extra = _synthetic_policy(("DATA-001", "en", 2))
     path, (fields, body) = next(iter(extra.items()))
     front_matter = [
@@ -595,30 +601,36 @@ def test_authorized_active_addition_can_use_block_roles(tmp_path, corpus):
     parsed = _read_future_policy(fixture)
 
     assert _read_roles(parsed[0]["allowed_roles"]) == {"employee", "hr"}
-    assert _validate_inventory(corpus | {path: parsed}) == _validate_inventory(corpus)
+    assert _validate_inventory(batch_one_corpus | {path: parsed}) == _validate_inventory(
+        batch_one_corpus
+    )
 
 
-def test_approved_predecessor_can_resolve_an_existing_link(corpus):
+def test_approved_predecessor_can_resolve_an_existing_link(batch_one_corpus):
     remote_en = ("REMOTE-001", "en", 1)
     predecessor_id = HISTORICAL_IDS[remote_en]
-    expanded = corpus | _synthetic_policy(("REMOTE-001", "en", 2))
-    assert predecessor_id in _validate_inventory(expanded)
+    expanded = batch_one_corpus | _synthetic_policy(("REMOTE-001", "en", 2))
+    pending = _validate_inventory(expanded)
+    assert pending == _validate_inventory(batch_one_corpus) | {predecessor_id}
 
     with_history = expanded | _synthetic_policy(remote_en, effective_date='"2025-01-01"')
-    assert _validate_inventory(with_history) == _validate_inventory(corpus)
+    assert _validate_inventory(with_history) == pending - {predecessor_id}
 
 
-def test_inventory_accepts_synthetic_full_active_and_historical_slots(corpus):
-    expanded = corpus.copy()
+def test_inventory_accepts_synthetic_full_active_and_historical_slots(batch_one_corpus):
+    expanded = batch_one_corpus.copy()
     for slot in ACTIVE_SLOTS:
         for path, policy in _synthetic_policy(slot).items():
             expanded.setdefault(path, policy)
-    assert _validate_inventory(expanded) == set(HISTORICAL_IDS.values())
+    assert len(expanded) == 20
+    pending = set(HISTORICAL_IDS.values())
+    assert _validate_inventory(expanded) == pending
 
-    for slot in HISTORICAL_IDS:
-        for path, policy in _synthetic_policy(slot).items():
-            expanded.setdefault(path, policy)
-    assert _validate_inventory(expanded) == set()
+    for slot, predecessor in HISTORICAL_IDS.items():
+        expanded.update(_synthetic_policy(slot, effective_date='"2025-01-01"'))
+        pending.remove(predecessor)
+        assert _validate_inventory(expanded) == pending
+    assert len(expanded) == 26
 
 
 @pytest.mark.parametrize(
@@ -627,28 +639,28 @@ def test_inventory_accepts_synthetic_full_active_and_historical_slots(corpus):
      ("DATA-001", "en", 1), ("DATA-001", "es", 2)],
     ids=["family", "language-slot", "version", "unapproved-history", "unknown-language"],
 )
-def test_inventory_rejects_unauthorized_slots(corpus, slot):
+def test_inventory_rejects_unauthorized_slots(batch_one_corpus, slot):
     with pytest.raises(AssertionError, match="Unauthorized policy slot"):
-        _validate_inventory(corpus | _synthetic_policy(slot))
+        _validate_inventory(batch_one_corpus | _synthetic_policy(slot))
 
 
 @pytest.mark.parametrize("path", [Path("fr/DATA-001-EN-V2.md"), Path("en/wrong.md")])
-def test_inventory_rejects_inconsistent_policy_paths(corpus, path):
+def test_inventory_rejects_inconsistent_policy_paths(batch_one_corpus, path):
     extra = _synthetic_policy(("DATA-001", "en", 2))
     with pytest.raises(AssertionError, match="Policy path mismatch"):
-        _validate_inventory(corpus | {path: next(iter(extra.values()))})
+        _validate_inventory(batch_one_corpus | {path: next(iter(extra.values()))})
 
 
-def test_inventory_rejects_duplicate_document_ids(corpus):
+def test_inventory_rejects_duplicate_document_ids(batch_one_corpus):
     extra = _synthetic_policy(("DATA-001", "en", 2), document_id="DATA-001-FR-V2")
     with pytest.raises(AssertionError, match="Duplicate document ID"):
-        _validate_inventory(corpus | extra)
+        _validate_inventory(batch_one_corpus | extra)
 
 
-def test_inventory_rejects_duplicate_slots_with_different_ids(corpus):
+def test_inventory_rejects_duplicate_slots_with_different_ids(batch_one_corpus):
     extra = _synthetic_policy(("DATA-001", "fr", 2), document_id="DUPLICATE-DATA-FR-V2")
     with pytest.raises(AssertionError, match="Duplicate policy slot"):
-        _validate_inventory(corpus | extra)
+        _validate_inventory(batch_one_corpus | extra)
 
 
 @pytest.mark.parametrize(
@@ -662,10 +674,10 @@ def test_inventory_rejects_duplicate_slots_with_different_ids(corpus):
         ('"null"', "Invalid predecessor link"),
     ],
 )
-def test_inventory_rejects_invalid_predecessor_links(corpus, predecessor, error):
+def test_inventory_rejects_invalid_predecessor_links(batch_one_corpus, predecessor, error):
     extra = _synthetic_policy(("REMOTE-001", "en", 2), supersedes=predecessor)
     with pytest.raises(AssertionError, match=error):
-        _validate_inventory(corpus | extra)
+        _validate_inventory(batch_one_corpus | extra)
 
 
 @pytest.mark.parametrize(
@@ -675,10 +687,10 @@ def test_inventory_rejects_invalid_predecessor_links(corpus, predecessor, error)
         (("DATA-001", "en", 2), "REMOTE-001-EN-V1"),
     ],
 )
-def test_inventory_rejects_wrong_or_misused_historical_ids(corpus, slot, document_id):
+def test_inventory_rejects_wrong_or_misused_historical_ids(batch_one_corpus, slot, document_id):
     extra = _synthetic_policy(slot, document_id=document_id)
     with pytest.raises(AssertionError, match="Unauthorized predecessor ID"):
-        _validate_inventory(corpus | extra)
+        _validate_inventory(batch_one_corpus | extra)
 
 
 @pytest.mark.parametrize(
@@ -695,9 +707,11 @@ def test_inventory_rejects_wrong_or_misused_historical_ids(corpus, slot, documen
     ids=["classification", "empty-roles", "unknown-role", "duplicate-roles",
          "bad-date", "quoted-null", "unknown-field"],
 )
-def test_inventory_rejects_invalid_future_metadata(corpus, overrides):
+def test_inventory_rejects_invalid_future_metadata(batch_one_corpus, overrides):
+    slot = ("DATA-001", "en", 2)
+    _validate_inventory(batch_one_corpus | _synthetic_policy(slot))
     with pytest.raises(AssertionError):
-        _validate_inventory(corpus | _synthetic_policy(("DATA-001", "en", 2), **overrides))
+        _validate_inventory(batch_one_corpus | _synthetic_policy(slot, **overrides))
 
 
 def test_inventory_rejects_missing_batch_one_document(corpus):
@@ -713,12 +727,46 @@ def _add_registry_row(matrix, next_section, row):
     return matrix.replace(marker, f"\n{row}{marker}", 1)
 
 
-def test_registry_accepts_additional_identity_and_rule(corpus):
-    expanded = corpus | _synthetic_policy(("DATA-001", "en", 2))
+@pytest.fixture
+def batch_one_matrix(batch_one_corpus):
     matrix = MATRIX_PATH.read_text(encoding="utf-8")
-    matrix = _add_registry_row(
-        matrix, "F", "| DATA-001-EN-V2 | DATA-001 | en | 2 | INTERNAL | [employee] | null |"
+    rule_columns = ("Rule", "Established requirement", "Source document and section")
+    identity_columns = (
+        "Document ID", "Policy ID", "Language", "Version",
+        "Classification", "Allowed roles", "Supersedes",
     )
+    rules = (
+        row for row in _registry_rows(matrix, "A", "B", rule_columns)
+        if row[0] in REQUIRED_RULE_REFERENCES
+    )
+    identities = (
+        row for row in _registry_rows(matrix, "E", "F", identity_columns)
+        if row[0].strip("\x60") in REQUIRED_IDS
+    )
+    # Keep only the original rows used by the fixture. The live matrix is
+    # independently validated against the live corpus above.
+    rule_table = (rule_columns, ("---",) * len(rule_columns), *rules)
+    identity_table = (identity_columns, ("---",) * len(identity_columns), *identities)
+    rule_lines = ("| " + " | ".join(row) + " |" for row in rule_table)
+    identity_lines = ("| " + " | ".join(row) + " |" for row in identity_table)
+    matrix = "\n".join([
+        "## A. Fixture rules", *rule_lines, "", "## B. End of rules", "",
+        "## E. Fixture identities", *identity_lines, "", "## F. End of identities",
+    ])
+    _validate_identity_registry(matrix, batch_one_corpus)
+    _validate_rule_registry(matrix, batch_one_corpus)
+    return matrix
+
+
+DATA_FIXTURE_ROW = "| DATA-001-EN-V2 | DATA-001 | en | 2 | INTERNAL | [employee] | null |"
+
+
+@pytest.mark.parametrize("roles", ["[employee]", ALL_READ_ROLES], ids=["synthetic-acl", "approved-acl"])
+def test_registry_accepts_additional_identity_and_rule(batch_one_corpus, batch_one_matrix, roles):
+    expanded = batch_one_corpus | _synthetic_policy(("DATA-001", "en", 2), allowed_roles=roles)
+    _validate_inventory(expanded)
+    row = DATA_FIXTURE_ROW.replace("[employee]", roles)
+    matrix = _add_registry_row(batch_one_matrix, "F", row)
     matrix = _add_registry_row(
         matrix, "B",
         "| Fixture rule | Fixture requirement | \x60DATA-001-EN-V2\x60 §1 “Fixture section” |",
@@ -728,25 +776,28 @@ def test_registry_accepts_additional_identity_and_rule(corpus):
 
 
 @pytest.mark.parametrize(
-    ("row", "error"),
+    ("row", "replace", "error"),
     [
         ("| DATA-001-EN-V2 | DATA-001 | en | 2 | PUBLIC | [employee] | null |",
-         "Registry identity mismatch"),
+         True, "Registry identity mismatch: DATA-001-EN-V2"),
         ("| DATA-001-EN-V2 | DATA-001 | en | 2 | INTERNAL | [hr] | null |",
-         "Registry ACL mismatch"),
+         True, "Registry ACL mismatch: DATA-001-EN-V2"),
         ("| DATA-001-EN-V2 | DATA-001 | en | 2 | INTERNAL | [employee] | DATA-001-FR-V1 |",
-         "Registry supersession mismatch"),
+         True, "Registry supersession mismatch: DATA-001-EN-V2"),
         ("| TRAVEL-001-FR-V1 | TRAVEL-001 | fr | 1 | PUBLIC | [employee] | null |",
-         "Duplicate registry identity"),
+         False, "Duplicate registry identity: TRAVEL-001-FR-V1"),
         ("| UNKNOWN-001-EN-V2 | UNKNOWN-001 | en | 2 | INTERNAL | [employee] | null |",
-         "Registry policy does not exist"),
+         False, "Registry policy does not exist: UNKNOWN-001-EN-V2"),
     ],
+    ids=["classification", "acl", "supersession", "duplicate-identity", "unknown-policy"],
 )
-def test_registry_rejects_inconsistent_identity_rows(corpus, row, error):
-    expanded = corpus | _synthetic_policy(("DATA-001", "en", 2))
-    matrix = _add_registry_row(MATRIX_PATH.read_text(encoding="utf-8"), "F", row)
+def test_registry_rejects_inconsistent_identity_rows(batch_one_corpus, batch_one_matrix, row, replace, error):
+    expanded = batch_one_corpus | _synthetic_policy(("DATA-001", "en", 2))
+    matrix = _add_registry_row(batch_one_matrix, "F", DATA_FIXTURE_ROW)
+    _validate_identity_registry(matrix, expanded)
+    invalid = matrix.replace(DATA_FIXTURE_ROW, row, 1) if replace else _add_registry_row(matrix, "F", row)
     with pytest.raises(AssertionError, match=error):
-        _validate_identity_registry(matrix, expanded)
+        _validate_identity_registry(invalid, expanded)
 
 
 def test_registry_accepts_original_citations_in_different_order(corpus):
@@ -760,6 +811,7 @@ def test_registry_accepts_original_citations_in_different_order(corpus):
 
 def test_registry_requires_original_source_references(corpus):
     matrix = MATRIX_PATH.read_text(encoding="utf-8")
+    _validate_rule_registry(matrix, corpus)
     omitted = matrix.replace("TRAVEL-001-FR-V1 §2 « Autorisation de la mission » and ", "", 1)
     assert omitted != matrix
     with pytest.raises(AssertionError, match="Missing source for Travel planned request"):
@@ -774,8 +826,8 @@ def test_registry_requires_original_source_references(corpus):
         ("TRAVEL-001-FR-V1 §2 « Autorisation de la mission » extra text", "Invalid source citation"),
     ],
 )
-def test_registry_rejects_invalid_new_source_references(corpus, source, error):
+def test_registry_rejects_invalid_new_source_references(batch_one_corpus, batch_one_matrix, source, error):
     row = f"| Fixture rule | Fixture requirement | {source} |"
-    matrix = _add_registry_row(MATRIX_PATH.read_text(encoding="utf-8"), "B", row)
+    matrix = _add_registry_row(batch_one_matrix, "B", row)
     with pytest.raises(AssertionError, match=error):
-        _validate_rule_registry(matrix, corpus)
+        _validate_rule_registry(matrix, batch_one_corpus)
