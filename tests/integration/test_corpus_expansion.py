@@ -44,25 +44,199 @@ EXPECTED_FIELDS = {
 }
 PROHIBITED_MARKERS = ("TODO", "TBD", "XXX", "placeholder", "lorem ipsum", "[insert")
 ARABIC_WORD = re.compile(r"[\u0621-\u064A]{2,}")
+READ_ROLES = {"employee", "hr", "finance", "it_security"}
 
 
-def _read_policy(path):
-    assert path.is_file(), f"Missing policy: {path}"
-    lines = path.read_text(encoding="utf-8").splitlines()
+def _parse_roles(value):
+    block_style = isinstance(value, list)
+    if block_style:
+        items = value
+    else:
+        flow_list = re.fullmatch(r"\[([^\[\]]*)\](?:[ \t]+#.*)?", value.strip())
+        assert flow_list is not None, f"Malformed allowed_roles list: {value!r}"
+        contents = flow_list[1].strip().removesuffix(",")
+        items = contents.split(",") if contents.strip() else []
+
+    roles = []
+    for item in items:
+        if block_style:
+            item = re.split(r"[ \t]+#", item, maxsplit=1)[0]
+        token = re.fullmatch(r"""(['"]?)([a-z_]+)\1""", item.strip())
+        assert token is not None, f"Malformed role grant: {item!r}"
+        assert token[2] in READ_ROLES, f"Invalid read role: {token[2]!r}"
+        roles.append(token[2])
+    assert roles, "Empty allowed_roles list"
+    assert len(roles) == len(set(roles)), "Duplicate read roles"
+    return f"[{', '.join(roles)}]" if block_style else value
+
+
+def _parse_policy(source, path):
+    # Phase 2 front matter uses single-line scalars and a flow or block role list.
+    lines = source.splitlines()
     assert lines[:1] == ["---"], f"Missing opening front-matter delimiter in {path}"
     assert "---" in lines[1:], f"Missing closing front-matter delimiter in {path}"
     closing = lines.index("---", 1)
 
     fields = {}
+    key = None
+    role_indent = None
     for line in lines[1:closing]:
-        key, separator, value = line.partition(": ")
-        assert separator and re.fullmatch(r"[a-z_]+", key) and value.strip(), (
-            f"Invalid front-matter line in {path}: {line!r}"
-        )
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        item = re.fullmatch(r"( *)-[ \t]+(.+)", line)
+        if item:
+            assert key == "allowed_roles" and isinstance(fields[key], list), (
+                f"Unexpected role-list item in {path}: {line!r}"
+            )
+            if role_indent is None:
+                role_indent = item[1]
+            assert item[1] == role_indent, f"Inconsistent role-list indentation in {path}"
+            fields[key].append(item[2])
+            continue
+
+        field = re.fullmatch(r"([a-z_]+):(?:[ \t]+(.*))?", line)
+        assert field is not None, f"Invalid front-matter line in {path}: {line!r}"
+        key = field[1]
         assert key not in fields, f"Duplicate front-matter field {key!r} in {path}"
-        fields[key] = value
+        value = field[2] or ""
+        if key == "allowed_roles" and (not value.strip() or value.startswith("#")):
+            fields[key] = []
+        else:
+            assert value.strip() and not value.startswith("#"), f"Empty {key!r} in {path}"
+            fields[key] = value
+
+    missing = EXPECTED_FIELDS[TRAVEL_EN].keys() - fields.keys()
+    assert not missing, f"Missing required metadata in {path}: {sorted(missing)}"
+    fields["allowed_roles"] = _parse_roles(fields["allowed_roles"])
+
+    identifier = re.fullmatch(
+        r"""(?:"([^"]+)"|'([^']+)'|([^\s"'\[\]{},#]+))""",
+        fields["document_id"].strip(),
+    )
+    assert identifier is not None, f"Invalid document_id in {path}"
+    document_id = identifier[1] or identifier[2] or identifier[3]
+    if identifier[3] is not None:
+        assert (
+            document_id.casefold() not in {"null", "~", "true", "false"}
+            and not document_id.isdecimal()
+        ), f"Invalid document_id in {path}"
+    assert path.name == f"{document_id}.md", f"Filename does not match document_id in {path}"
 
     return fields, "\n".join(lines[closing + 1:])
+
+
+def _read_policy(path):
+    assert path.is_file(), f"Missing policy: {path}"
+    return _parse_policy(path.read_text(encoding="utf-8"), path)
+
+
+def _policy_source(role_field="allowed_roles: [employee, hr]"):
+    fields = [
+        role_field if key == "allowed_roles" else f"{key}: {value}"
+        for key, value in EXPECTED_FIELDS[TRAVEL_EN].items()
+    ]
+    return "\n".join(["---", *fields, "---", "# Fixture"])
+
+
+@pytest.mark.parametrize(
+    "role_field",
+    [
+        "allowed_roles: [employee, hr]",
+        "allowed_roles:\n  - employee\n  - hr",
+        "allowed_roles:\n- employee\n- hr",
+    ],
+    ids=["flow", "indented-block", "indentless-block"],
+)
+def test_policy_reader_accepts_supported_role_lists(role_field):
+    fields, body = _parse_policy(_policy_source(role_field), TRAVEL_EN)
+
+    assert fields == {**EXPECTED_FIELDS[TRAVEL_EN], "allowed_roles": "[employee, hr]"}
+    assert body == "# Fixture"
+
+
+@pytest.mark.parametrize(
+    "role_field",
+    ["allowed_roles: []", "allowed_roles:"],
+    ids=["empty-flow", "empty-block"],
+)
+def test_policy_reader_rejects_empty_role_lists(role_field):
+    with pytest.raises(AssertionError, match="Empty allowed_roles list"):
+        _parse_policy(_policy_source(role_field), TRAVEL_EN)
+
+
+@pytest.mark.parametrize(
+    ("role_field", "error"),
+    [
+        ("allowed_roles: [ingestion_admin]", "Invalid read role"),
+        ("allowed_roles:\n  - contractor", "Invalid read role"),
+        ("allowed_roles: [employee, employee]", "Duplicate read roles"),
+    ],
+    ids=["admin-role", "unknown-role", "duplicate-role"],
+)
+def test_policy_reader_rejects_invalid_role_grants(role_field, error):
+    with pytest.raises(AssertionError, match=error):
+        _parse_policy(_policy_source(role_field), TRAVEL_EN)
+
+
+@pytest.mark.parametrize(
+    ("role_field", "error"),
+    [
+        ("allowed_roles: employee", "Malformed allowed_roles list"),
+        ("allowed_roles: [employee, hr", "Malformed allowed_roles list"),
+        ("allowed_roles: [employee]\n  - hr", "Unexpected role-list item"),
+        ("allowed_roles:\n  - [employee, hr]", "Malformed role grant"),
+        ("allowed_roles:\n  - employee\n    - hr", "Inconsistent role-list indentation"),
+        ("allowed_roles:\n  - employee: hr", "Malformed role grant"),
+    ],
+    ids=["scalar", "unclosed-flow", "mixed-styles", "nested-list", "indentation", "mapping"],
+)
+def test_policy_reader_rejects_malformed_role_lists(role_field, error):
+    with pytest.raises(AssertionError, match=error):
+        _parse_policy(_policy_source(role_field), TRAVEL_EN)
+
+
+def test_policy_reader_rejects_duplicate_metadata_keys():
+    source = _policy_source("allowed_roles:\n  - employee\nallowed_roles: [hr]")
+
+    with pytest.raises(AssertionError, match="Duplicate front-matter field 'allowed_roles'"):
+        _parse_policy(source, TRAVEL_EN)
+
+
+def test_policy_reader_rejects_missing_required_metadata():
+    source = _policy_source().replace("title: Business Travel Policy\n", "", 1)
+
+    with pytest.raises(AssertionError, match="Missing required metadata.*title"):
+        _parse_policy(source, TRAVEL_EN)
+
+
+@pytest.mark.parametrize(
+    ("value", "error"),
+    [
+        ("[TRAVEL-001-EN-V1]", "Invalid document_id"),
+        ("OTHER-001-EN-V1", "Filename does not match document_id"),
+    ],
+    ids=["non-scalar", "filename-mismatch"],
+)
+def test_policy_reader_rejects_invalid_document_ids(value, error):
+    source = _policy_source().replace("document_id: TRAVEL-001-EN-V1", f"document_id: {value}", 1)
+
+    with pytest.raises(AssertionError, match=error):
+        _parse_policy(source, TRAVEL_EN)
+
+
+@pytest.mark.parametrize(
+    ("delimiter", "replacement", "position"),
+    [
+        ("---\n", "----\n", "opening"),
+        ("\n---\n", "\n----\n", "closing"),
+    ],
+    ids=["opening", "closing"],
+)
+def test_policy_reader_rejects_invalid_front_matter_delimiters(delimiter, replacement, position):
+    source = _policy_source().replace(delimiter, replacement, 1)
+
+    with pytest.raises(AssertionError, match=f"Missing {position} front-matter delimiter"):
+        _parse_policy(source, TRAVEL_EN)
 
 
 @pytest.mark.parametrize("path", EXPECTED_FIELDS, ids=lambda path: path.stem)
@@ -77,8 +251,8 @@ def test_expanded_policy_has_exact_metadata_and_filename(path):
 def test_expanded_document_ids_are_unique_across_the_corpus():
     document_paths = {}
     for path in sorted(POLICY_ROOT.rglob("*.md")):
-        fields, _ = _read_policy(path)
-        document_id = fields["document_id"].strip("'\"")
+        _read_policy(path)
+        document_id = path.stem
         assert document_id not in document_paths, (
             f"{path} and {document_paths[document_id]} share {document_id}"
         )
