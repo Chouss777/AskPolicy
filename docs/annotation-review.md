@@ -2,7 +2,7 @@
 
 ## Review scope
 
-The project owner approved the five French development candidates after reviewing the Step 42 evidence from the two synthetic seed policies, `TRAVEL-001-FR-V1` and `LEAVE-001-FR-V2`. The approval applies to the current two-policy seed corpus. No held-out dataset was reviewed or approved.
+The project owner approved the five French development candidates after reviewing the Step 42 evidence from the two synthetic seed policies, `TRAVEL-001-FR-V1` and `LEAVE-001-FR-V2`. That approval applied to the two-policy seed corpus. No held-out dataset was reviewed or approved.
 
 ## Relevance grade interpretation
 
@@ -10,7 +10,7 @@ Grade 3 = directly and fully relevant evidence that explicitly supports the requ
 
 This interpretation applies to the existing grade-3 annotations in this seed review. The full relevance grading rubric remains to be established.
 
-## Decisions
+## Seed-corpus decisions
 
 | Candidate | Human review decision |
 |---|---|
@@ -20,9 +20,9 @@ This interpretation applies to the existing grade-3 annotations in this seed rev
 | `dev-candidate-004` | Approved |
 | `dev-candidate-005` | Approved conditionally |
 
-`dev-candidate-005` is unanswerable in the current seed corpus. Its `revalidation_required` flag records an outstanding human review obligation for the expanded corpus.
+`dev-candidate-005` was unanswerable in the seed corpus. Its initial `revalidation_required` flag recorded the obligation to review the expanded corpus.
 
-## Revalidation gate
+## Original revalidation gate
 
 Revalidate `dev-candidate-005` after corpus expansion and before evaluation dataset freezing.
 
@@ -33,6 +33,18 @@ Revalidate `dev-candidate-005` after corpus expansion and before evaluation data
 5. Record the human review decision.
 
 Do not automatically clear `revalidation_required`.
+
+## Candidate 005 final approval
+
+On November 12, 2026, the project owner approved retaining the expected refusal for `dev-candidate-005` with active role `employee`. The full-corpus review covered 26 policies, including 20 current policies. Of those, 15 current policies were authorized for `employee`. None of those 15 policies specifies a monthly contribution amount for a sports subscription.
+
+Refuse to invent or confirm an amount. The response may state that accessible policies do not specify it. Whether Atlas Services offers a sports benefit remains undetermined.
+
+This decision completes the Candidate 005 revalidation recorded in the corpus rule matrix §G. The approved record now has `revalidation_required: false`. Revalidate the refusal if eligible policy evidence changes.
+
+## Open Travel interpretation
+
+The standard accommodation cap in `TRAVEL-001-FR-V1` and `TRAVEL-001-EN-V1` §4 remains 850 MAD per night. The emergency exception in §6 expressly covers necessary transport. The procedure for emergency lodging above the cap remains unspecified. Wait for the project owner to approve an interpretation before using that scenario in an evaluation case.
 
 ## Limitations
 

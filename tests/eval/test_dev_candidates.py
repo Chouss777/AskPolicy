@@ -91,19 +91,30 @@ def test_annotation_review_defines_relevance_grade_three():
     ) in review
 
 
-def test_only_candidate_005_requires_revalidation(candidates):
-    flagged = {case["query_id"] for case in candidates if case["revalidation_required"]}
-    assert flagged == {"dev-candidate-005"}
+def test_candidate_005_retains_the_owner_approved_refusal(candidates):
+    case = next(case for case in candidates if case["query_id"] == "dev-candidate-005")
+    assert case["active_role"] == "employee"
+    assert case["case_type"] == "unanswerable"
+    assert case["annotation_review_status"] == "human_approved"
+    assert case["expected_status"] == "refusal"
+    assert case["required_facts"] == []
+    assert case["authorized_source_sections"] == []
+    assert all(case["revalidation_required"] is False for case in candidates)
 
 
-def test_annotation_review_requires_revalidation_before_freezing():
+def test_annotation_review_records_candidate_005_final_owner_approval():
     review = ANNOTATION_REVIEW.read_text(encoding="utf-8")
-    gate = review.partition("## Revalidation gate\n")[2].split("\n## ", 1)[0]
+    decision = review.partition("## Candidate 005 final approval\n")[2].split("\n## ", 1)[0]
     assert (
-        "Revalidate `dev-candidate-005` after corpus expansion and before evaluation "
-        "dataset freezing."
-    ) in gate
-    assert "Do not automatically clear `revalidation_required`." in gate
+        "On November 12, 2026, the project owner approved retaining the expected refusal "
+        "for `dev-candidate-005` with active role `employee`."
+    ) in decision
+    assert "26 policies, including 20 current policies" in decision
+    assert "15 current policies were authorized for `employee`" in decision
+    assert "None of those 15 policies specifies a monthly contribution amount" in decision
+    assert "Whether Atlas Services offers a sports benefit remains undetermined." in decision
+    assert "`revalidation_required: false`" in decision
+    assert "Revalidate the refusal if eligible policy evidence changes." in decision
 
 
 def test_answerable_cases_cover_travel_and_leave(candidates):

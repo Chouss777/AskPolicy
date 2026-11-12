@@ -47,4 +47,4 @@ IT Security reviews permissions when a role changes and at scheduled reviews. Th
 
 **Exception.** If a temporary need is urgent, IT Security may prioritize the request after line manager validation. IT Security approval is still required before any access is granted.
 
-IT Security documents the justification, its approval, the scope, and the end date. It verifies removal at expiry and records the follow-up. If the need is disputed, the grant remains suspended during review.
+IT Security documents the justification, its approval, the scope, and the end date. It verifies removal at expiry and records the follow-up. If the need is disputed, the requested access grant remains on hold until the dispute is resolved.
