@@ -67,13 +67,13 @@ This working registry tracks consistency across the active language versions for
 | `PROCUREMENT-001-FR-V1` §§1–5 | Company-issued purchases require a request, documented budget approval, supplier documentation, and Finance authorization of the purchase order before commitment. Separate requesting, approving, ordering, and receiving responsibilities as specified. Urgency may accelerate review while approvals and the approved purchase order remain required. Employee advances follow Expenses approval and claim rules. |
 | `LEAVE-001-EN-V2`, `EXPENSES-001-FR-V2`, `EXPENSES-001-EN-V2` | Language counterparts carry forward the established source rules in section A. |
 
-## C. Pending documents and rules
+## C. Complete corpus inventory
 
-The 20 active versions are present. The six historical versions are still due. Their historical rules and metadata require review when authored.
+The full-scope corpus has 26 Markdown policies across eight families. There are 20 active policies (8 FR, 8 EN, 4 AR) and six superseded policies (5 FR, 1 EN).
 
-## D. Version relationships and pending predecessors
+## D. Resolved version relationships
 
-These six same-language predecessor links are intentional and remain unresolved until Batch 3.
+These six successor-to-predecessor links resolve to existing records of the same policy family and language.
 
 - `REMOTE-001-FR-V2` → `REMOTE-001-FR-V1`
 - `REMOTE-001-EN-V2` → `REMOTE-001-EN-V1`
@@ -82,7 +82,7 @@ These six same-language predecessor links are intentional and remain unresolved 
 - `ACCESS-001-FR-V2` → `ACCESS-001-FR-V1`
 - `DATA-001-FR-V2` → `DATA-001-FR-V1`
 
-The other active versions have literal `supersedes: null`. The locked inventory defines no predecessor for those policy/language pairs.
+All six V1 predecessors and the other active policies have literal `supersedes: null`. At the fixed Phase 2 test validity time of 2026-10-01, the six historical records are approved, effective, and unexpired. Current-policy retrieval must exclude them because their V2 successors supersede them. The Phase 2 tests model eligibility using the explicit links and validity conditions in `docs/decisions.md` §4. Runtime version selection is a later-phase acceptance requirement.
 
 ## E. Document identities and ACLs
 
@@ -108,6 +108,12 @@ The other active versions have literal `supersedes: null`. The locked inventory 
 | `REMOTE-001-AR-V2` | `REMOTE-001` | `ar` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
 | `LEAVE-001-AR-V2` | `LEAVE-001` | `ar` | 2 | `RESTRICTED` | `[hr]` | `null` |
 | `DATA-001-AR-V2` | `DATA-001` | `ar` | 2 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `REMOTE-001-FR-V1` | `REMOTE-001` | `fr` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `REMOTE-001-EN-V1` | `REMOTE-001` | `en` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `LEAVE-001-FR-V1` | `LEAVE-001` | `fr` | 1 | `RESTRICTED` | `[hr]` | `null` |
+| `EXPENSES-001-FR-V1` | `EXPENSES-001` | `fr` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
+| `ACCESS-001-FR-V1` | `ACCESS-001` | `fr` | 1 | `RESTRICTED` | `[it_security]` | `null` |
+| `DATA-001-FR-V1` | `DATA-001` | `fr` | 1 | `INTERNAL` | `[employee, hr, finance, it_security]` | `null` |
 
 ## F. Cross-policy distinctions and exceptions
 
@@ -122,3 +128,28 @@ The other active versions have literal `supersedes: null`. The locked inventory 
 - Review the new French workflow rules and confirm the Procurement and Expenses boundary for mixed transactions. Confirm that broadly readable policies contain no restricted procedural detail.
 - Review the expanded set of authorized evidence for development candidates before freezing. Candidate `dev-candidate-005` retains its documented revalidation obligation.
 - Review Batch 2 counterparts against the cited sections, including Arabic distinctions between a minimum notice period and a duration that must be exceeded, French and Arabic terms for service coverage, and whether the translations preserve approval authority, temporary exceptions, and restricted disclosure. Automated checks cover selected clauses and access metadata. Independent bilingual review remains pending.
+- Review FR and EN Remote Work V1 together for the standard limit, temporary exception, prior manager approval, and data handling. Review the historical Leave and Expenses differences, and confirm that the V1 Access Control and Data Handling workflows are clearly version-specific. Independent semantic review remains pending.
+
+## H. Historical effective dates and provenance
+
+| Document ID | Effective date | Approval status | Source type | Source license |
+|---|---|---|---|---|
+| `REMOTE-001-FR-V1` | `2026-01-01` | `approved` | `synthetic_policy` | `project_owned` |
+| `REMOTE-001-EN-V1` | `2026-01-01` | `approved` | `synthetic_policy` | `project_owned` |
+| `LEAVE-001-FR-V1` | `2026-01-01` | `approved` | `synthetic_policy` | `project_owned` |
+| `EXPENSES-001-FR-V1` | `2026-01-01` | `approved` | `synthetic_policy` | `project_owned` |
+| `ACCESS-001-FR-V1` | `2026-01-01` | `approved` | `synthetic_policy` | `project_owned` |
+| `DATA-001-FR-V1` | `2026-01-01` | `approved` | `synthetic_policy` | `project_owned` |
+
+## I. Historical rules and active differences
+
+| Rule | Established requirement | Source document and section |
+|---|---|---|
+| Remote Work weekly limit | The FR and EN V1 policies cap standard remote work at one day per week with prior line-manager authorization. The FR and EN V2 policies allow up to two days per week, still with prior authorization. | REMOTE-001-FR-V1 §2 « Demande et autorisation » and REMOTE-001-EN-V1 §2 “Requests and authorization” and REMOTE-001-FR-V2 §2 « Demande et autorisation » and REMOTE-001-EN-V2 §2 “Requests and authorization” |
+| Remote Work historical data duties and exception | V1 requires approved tools and storage, authorized recipients, and incident reporting. A justified temporary additional day requires manager authorization after HR consultation. V2 requires documented HR review before implementing an arrangement above its two-day limit. | REMOTE-001-FR-V1 §4 « Protection des données et interruptions » and REMOTE-001-FR-V1 §5 « Exception temporaire » and REMOTE-001-EN-V1 §4 “Data protection and interruptions” and REMOTE-001-EN-V1 §5 “Temporary exception” and REMOTE-001-FR-V2 §5 « Exceptions et interruptions » and REMOTE-001-EN-V2 §5 “Exceptions and interruptions” |
+| Leave FR planned notice | V1 requires at least seven working days before departure. V2 requires at least five working days. | LEAVE-001-FR-V1 §2 « Demande de congé planifié » and LEAVE-001-FR-V2 §2 « Dépôt et traitement de la demande » |
+| Leave FR historical approval, confidentiality and emergency | V1 checks the leave balance and service coverage before HR approval. Only HR may access registers, balances, and supporting records. HR may authorize emergency absence without ordinary notice or prior manager confirmation. The employee completes the file on return. V2 specifies a two-working-day regularization deadline after return. | LEAVE-001-FR-V1 §3 « Vérification et décision » and LEAVE-001-FR-V1 §4 « Confidentialité et destinataires » and LEAVE-001-FR-V1 §5 « Urgence familiale » and LEAVE-001-FR-V2 §4 « Confidentialité et informations communiquées » and LEAVE-001-FR-V2 §5 « Exceptions et escalade » |
+| Expenses FR field meal cap | V1 caps an eligible field meal at 120 MAD per meal. V2 caps it at 150 MAD per meal. Both require an itemized receipt and apply the cap when the company does not provide the meal. | EXPENSES-001-FR-V1 §2 « Admissibilité et pièces justificatives » and EXPENSES-001-FR-V2 §2 « Dépenses admissibles au remboursement » |
+| Expenses FR historical documentation and review | V1 retains the ordinary expense deadline, the separate Travel deadline, prior dual approval above 1,000 MAD for operational purchases, Finance review, and the supplier-copy receipt exception with proof of payment and an explanation. | EXPENSES-001-FR-V1 §3 « Transmission de la demande » and EXPENSES-001-FR-V1 §4 « Approbation et remboursement » and EXPENSES-001-FR-V1 §5 « Justificatif de remplacement » |
+| Access Control FR review and temporary grants | V1 requires a documented need, manager validation, and IT Security approval. Change and end-of-need notifications trigger review and removal, including urgent task-bound grants. V2 adds scheduled reviews and recorded temporary expiry with follow-up verification. | ACCESS-001-FR-V1 §2 « Demande et attribution » and ACCESS-001-FR-V1 §3 « Suivi sur notification » and ACCESS-001-FR-V1 §4 « Retrait et contestation » and ACCESS-001-FR-V1 §5 « Besoin urgent et limité » and ACCESS-001-FR-V2 §3 « Attribution au moindre privilège » and ACCESS-001-FR-V2 §4 « Revue et révocation » and ACCESS-001-FR-V2 §5 « Exceptions et suivi » |
+| Data Handling FR transfer and channel approval | V1 preserves recipient authorization, minimum sharing, approved storage and incident escalation. The data owner can authorize an external transfer in writing or authorize use of an already approved space for the same recipients. V2 requires both the data owner and IT Security to approve external transfers and temporary alternate channels. | DATA-001-FR-V1 §2 « Autorisation et contenu du partage » and DATA-001-FR-V1 §3 « Stockage et envois externes » and DATA-001-FR-V1 §4 « Divulgation accidentelle » and DATA-001-FR-V1 §5 « Indisponibilité du canal habituel » and DATA-001-FR-V2 §3 « Stockage et transfert » and DATA-001-FR-V2 §5 « Exceptions et escalade » |
