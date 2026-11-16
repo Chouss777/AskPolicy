@@ -9,10 +9,10 @@ The three Phase 1 entries have meaningful tests. Repository contract coverage is
 | Ingestion determinism | `tests/integration/test_ingestion_deterministic.py` | 3 — implemented |
 | Metadata validation | `tests/unit/test_metadata_validation.py` | 3 — implemented |
 | Snapshot integrity | `tests/integration/test_snapshot_consistency.py` | 5 — pending |
-| Authentication | `tests/security/test_auth.py` | 4 — pending |
-| Role grants | `tests/security/test_role_grant.py` | 4 — pending |
+| Authentication | `tests/security/test_auth.py` | 4 — implemented |
+| Role grants | `tests/security/test_role_grant.py` | 4 — implemented |
 | Role-scoped retrieval | `tests/security/test_role_scoping.py` | 5 — pending |
-| Default-deny ACL | `tests/security/test_default_deny.py` | 4 — pending |
+| Default-deny ACL | `tests/security/test_default_deny.py` | 4 — implemented |
 | Refusal indistinguishability | `tests/security/test_refusal_indistinguishability.py` | 6 — pending |
 | E5 prefixes | `tests/unit/test_e5_prefix.py` | 5 — pending |
 | FAISS normalization | `tests/unit/test_faiss_normalization.py` | 5 — pending |
@@ -31,7 +31,7 @@ The three Phase 1 entries have meaningful tests. Repository contract coverage is
 | Embedding consistency | `tests/integration/test_embedding_revision.py` | 5 — pending |
 | RRF correctness | `tests/unit/test_rrf.py` | 5 — pending |
 | Role switching | `tests/security/test_role_switch.py` | 4 — pending |
-| Ingestion admin isolation | `tests/security/test_admin_isolation.py` | 4 — pending |
+| Ingestion admin isolation | `tests/security/test_admin_isolation.py` | 4 — implemented |
 | Source access | `tests/security/test_source_access.py` | 4 — pending |
 | Parent authorization | `tests/security/test_parent_expansion.py` | 5 — pending |
 | Prompt injection | `tests/security/test_prompt_injection.py` | 6 — pending |
@@ -48,4 +48,4 @@ The three Phase 1 entries have meaningful tests. Repository contract coverage is
 
 ## Open deferrals
 
-- config.py environment loading — deferred to Phase 3 — may require pydantic-settings — subject to docs/decisions.md §18
+- Runtime JWT configuration loading in `config.py` was implemented in Step 81. It reads process environment variables or an explicit mapping. Automatic `.env` parsing is outside the loader's scope. Any new dependency remains subject to `docs/decisions.md` §18.
