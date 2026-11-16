@@ -1,0 +1,148 @@
+{
+  "bm25s_version": "0.3.16",
+  "candidate_draft_snapshot_id": "ddd98004d41bc5fcd9021078c036e3b07cbe94066f528a9bbbc44eef45453794",
+  "canonical_source_manifest_sha256": "3306035cb2742ae2323b9d7c1a73f5ea128a08ddf85f17bef7fefcaa20ad9960",
+  "cases": [
+    {
+      "active_role": "employee",
+      "gold_section_count": 1,
+      "gold_sections": [
+        {
+          "document_id": "TRAVEL-001-FR-V1",
+          "parent_id": "parent:9ed6ed6d66e4a5b9ce1ef79e6b7a1df598b5d792925b0e8159bf0f94585ae9c2",
+          "section_heading": "4. Transport et hébergement"
+        }
+      ],
+      "language": "fr",
+      "query_id": "dev-candidate-001",
+      "ranking": [
+        {
+          "child_id": "child:859e850c4bd9bad620f83ad3a2b82dec5793cdf32ed4b4b829a28f9b86125178",
+          "document_id": "TRAVEL-001-FR-V1",
+          "parent_id": "parent:9ed6ed6d66e4a5b9ce1ef79e6b7a1df598b5d792925b0e8159bf0f94585ae9c2",
+          "rank": 1,
+          "score": 3.0234673023223877,
+          "section_heading": "4. Transport et hébergement"
+        },
+        {
+          "child_id": "child:bd258129f69203cbe2579d24721beb2e8b9ea0f04b7add7c28ffdcfceba7839a",
+          "document_id": "TRAVEL-001-FR-V1",
+          "parent_id": "parent:bee67047bf16d9252e418a3d3ec5e200e15749ad36a5c879c407150156cb4e42",
+          "rank": 2,
+          "score": 2.789381742477417,
+          "section_heading": "6. Exceptions et escalade"
+        },
+        {
+          "child_id": "child:7037736afc62adb2f623d4d5d2fe301916f9ff80b4c83ad87284e9b02f40f3d3",
+          "document_id": "TRAVEL-001-FR-V1",
+          "parent_id": "parent:245b3e68aa66c6e7dccb37dce6df6eb7a0e30bf87885975365b8517e6c968e91",
+          "rank": 3,
+          "score": 2.515439748764038,
+          "section_heading": "2. Autorisation de la mission"
+        },
+        {
+          "child_id": "child:73fea47dd4f34935719fd492d9bf7a96d095e92a99ba43311fc859d0cf4bb054",
+          "document_id": "TRAVEL-001-FR-V1",
+          "parent_id": "parent:aba3c6d1f80ddf54c522318eefc903d9f545a431d85f15efff7d74e584d959c7",
+          "rank": 4,
+          "score": 2.2396607398986816,
+          "section_heading": "3. Réservation et responsabilités"
+        },
+        {
+          "child_id": "child:7d93f78585acf16643f71846940112f4a6d8019031cc21d7f14b01c1b32a55bb",
+          "document_id": "TRAVEL-001-FR-V1",
+          "parent_id": "parent:1a6e2955c93f1914dd4d4809407cefac94e34318a4f38d08a7016c61ffdbbb1b",
+          "rank": 5,
+          "score": 1.6105215549468994,
+          "section_heading": "5. Remboursement des frais"
+        }
+      ],
+      "recall_at_5": 1.0
+    }
+  ],
+  "configuration": {
+    "bm25s": {
+      "b": 0.75,
+      "backend": "numpy",
+      "csc_backend": "numpy",
+      "dtype": "float32",
+      "idf_method": "lucene",
+      "int_dtype": "int32",
+      "k1": 1.5,
+      "method": "lucene"
+    },
+    "empty_token_indexed": false,
+    "index_order": [
+      "document_id",
+      "child_start",
+      "child_id"
+    ],
+    "indexed_text": "exact_stored_child_text",
+    "positive_scores_only": true,
+    "ranking_order": [
+      "score_descending",
+      "child_id_ascending"
+    ],
+    "tokenization": {
+      "lowercase": true,
+      "normalization": "NFC",
+      "pattern": "(?u)\\b\\w\\w+\\b",
+      "stemmer": null,
+      "stopwords": [],
+      "unicode_version": "14.0.0"
+    },
+    "top_k": 5
+  },
+  "dataset_sha256": "dce7427c1e096b5d0cd81f6b928883a0ef2c707f0cfa6dce7826d66f9aff916c",
+  "draft_counts": {
+    "children": 387,
+    "documents": 26,
+    "parents": 161
+  },
+  "draft_snapshot_config_hash": "8895e443ca6227fe66976bf6ce671bf5e426f680726e9eb5363f48264e9a7715",
+  "evaluated_positive_case_count": 1,
+  "evaluated_query_ids": [
+    "dev-candidate-001"
+  ],
+  "evaluation_kind": "offline_public_smoke",
+  "excluded_case_count": 4,
+  "excluded_case_counts_by_reason": {
+    "GOLD_NOT_PUBLIC": 2,
+    "REFUSAL_NO_POSITIVE_GOLD": 2
+  },
+  "excluded_cases": [
+    {
+      "query_id": "dev-candidate-002",
+      "reason": "GOLD_NOT_PUBLIC"
+    },
+    {
+      "query_id": "dev-candidate-003",
+      "reason": "GOLD_NOT_PUBLIC"
+    },
+    {
+      "query_id": "dev-candidate-004",
+      "reason": "REFUSAL_NO_POSITIVE_GOLD"
+    },
+    {
+      "query_id": "dev-candidate-005",
+      "reason": "REFUSAL_NO_POSITIVE_GOLD"
+    }
+  ],
+  "indexed_child_count": 30,
+  "indexed_document_count": 2,
+  "indexed_document_ids": [
+    "TRAVEL-001-EN-V1",
+    "TRAVEL-001-FR-V1"
+  ],
+  "macro_recall_at_5": 1.0,
+  "numpy_version": "2.4.6",
+  "readiness_gate": {
+    "operator": ">",
+    "passed": true,
+    "threshold": 0.0
+  },
+  "scope": "human_approved_seed_public_evidence",
+  "snapshot_status": "UNPUBLISHED",
+  "source_manifest_sha256": "8cdaae9386d704013a41252bc2c6cb1bfdf04f6b7670fcd5415180ca766a528d",
+  "validity_date": "2026-09-01"
+}
