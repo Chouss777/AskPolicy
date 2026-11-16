@@ -6,8 +6,8 @@ The three Phase 1 entries have meaningful tests. Repository contract coverage is
 
 | Acceptance criterion | Enforcing test path | Intended implementation phase |
 |---|---|---|
-| Ingestion determinism | `tests/integration/test_ingestion_deterministic.py` | 3 — pending |
-| Metadata validation | `tests/unit/test_metadata_validation.py` | 3 — pending |
+| Ingestion determinism | `tests/integration/test_ingestion_deterministic.py` | 3 — implemented |
+| Metadata validation | `tests/unit/test_metadata_validation.py` | 3 — implemented |
 | Snapshot integrity | `tests/integration/test_snapshot_consistency.py` | 5 — pending |
 | Authentication | `tests/security/test_auth.py` | 4 — pending |
 | Role grants | `tests/security/test_role_grant.py` | 4 — pending |
@@ -24,8 +24,8 @@ The three Phase 1 entries have meaningful tests. Repository contract coverage is
 | End-to-end | `tests/eval/test_e2e.py` | 7 — pending |
 | Streamlit cache isolation | `tests/integration/test_ui_cache_isolation.py` | 8 — pending |
 | Corpus manifest | `tests/integration/test_corpus_manifest.py` | 2 — implemented |
-| Parent-child structure | `tests/integration/test_chunk_boundaries.py` | 3 — pending |
-| Policy validity | `tests/integration/test_version_selection.py` | 3 — pending |
+| Parent-child structure | `tests/integration/test_chunk_boundaries.py` | 3 — implemented |
+| Policy validity | `tests/integration/test_version_selection.py` | 3 — implemented |
 | Atomic publication | `tests/integration/test_snapshot_publication.py` | 5 — pending |
 | Rebuildability | `tests/integration/test_index_rebuild.py` | 5 — pending |
 | Embedding consistency | `tests/integration/test_embedding_revision.py` | 5 — pending |
