@@ -62,6 +62,7 @@ Do not expand scope without explicit human approval. Enforcement: `tests/integra
 | Vector normalization | L2-normalized embeddings |
 | Lexical retrieval | BM25S |
 | Embeddings | `intfloat/multilingual-e5-small` |
+| E5 CPU runtime | `torch==2.15.0` from the explicit `https://download.pytorch.org/whl/cpu` index and `transformers==5.23.0` |
 | Reranker | `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` (conditional) |
 | Local LLM | Ollama + `qwen3:4b-instruct` |
 | Metadata | SQLite |
@@ -72,6 +73,8 @@ Do not expand scope without explicit human approval. Enforcement: `tests/integra
 | Automation and CI | Makefile + GitHub Actions |
 
 Pin the exact embedding and reranker revisions; pin and record the installed Ollama model digest. Record the versions and digest in evaluation manifests; reject unapproved mismatches.
+
+The owner approved the E5 CPU runtime pins in Step 90 under `docs/decisions.md` §18. Step 89 confirmed that FAISS and NumPy could not run E5 on their own. Imports failed with `ModuleNotFoundError: No module named 'transformers'` and `ModuleNotFoundError: No module named 'torch'`. This approval preserves the architecture and scope and permits only the recorded runtime pins and E5 revision. Dependency or model substitutions require separate approval.
 
 The reranker is **conditional**: enable in the deployed pipeline only after development-set retrieval quality and measured latency justify it.
 
@@ -143,7 +146,7 @@ Enforcement: `tests/integration/test_ingestion_deterministic.py`, `tests/integra
 
 Use FAISS-cpu `IndexFlatIP` with L2-normalized query and passage embeddings. With unit vectors, the inner-product score equals cosine similarity. **It is not an L2 distance:** do not apply `sqrt()` and do not label raw similarity as calibrated confidence percentage.
 
-Use the identical pinned revision of `intfloat/multilingual-e5-small` at indexing and query time.
+Use revision `614241f622f53c4eeff9890bdc4f31cfecc418b3` of `intfloat/multilingual-e5-small` at indexing and query time. Provision the exact checkpoint and tokenizer outside Git, verify their checksums, and load them on CPU using `local_files_only=True`, `trust_remote_code=False`, and `use_safetensors=True` for weights. Reject missing or mismatched artifacts. Count the prefix and special tokens toward the 512-token limit and reject overlength inputs without silent truncation.
 
 Mandatory encoder prefixes:
 - Query input: `query: `

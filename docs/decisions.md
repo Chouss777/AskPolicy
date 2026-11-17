@@ -44,6 +44,7 @@ AskPolicy is a **security-aware prototype**, not an enterprise security certific
 | Similarity | L2-normalized vectors and inner product | Cosine similarity after normalization. |
 | Lexical retrieval | BM25S | Fast, local, serverless BM25 index. |
 | Embeddings | `intfloat/multilingual-e5-small` | Lightweight multilingual representations. |
+| E5 CPU runtime | `torch==2.15.0` from the explicit `https://download.pytorch.org/whl/cpu` index and `transformers==5.23.0` | Owner-approved local inference runtime under §18. |
 | Reranker | `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | Multilingual reranking, conditional on measured gain. |
 | Generation | Ollama + `qwen3:4b-instruct` | Local, structured, no paid inference API. |
 | Runtime metadata | SQLite | Validated corpus and ACL source of truth. |
@@ -66,7 +67,9 @@ The corpus is small; exact search is inexpensive. SQLite and local role-scoped i
 
 ### E5 embedding contract
 
-Use the exact pinned `intfloat/multilingual-e5-small` revision at ingestion and query time. Prefix inputs with `query: ` and `passage: ` respectively. Store model revision in index metadata. **Tests:** `tests/unit/test_e5_prefix.py`, `tests/integration/test_embedding_revision.py`.
+Use revision `614241f622f53c4eeff9890bdc4f31cfecc418b3` of `intfloat/multilingual-e5-small` at ingestion and query time. Prefix inputs with `query: ` and `passage: ` respectively. Count the prefix and special tokens toward the 512-token limit, and reject overlength inputs explicitly. Use attention-mask mean pooling and L2-normalized 384-dimensional float32 embeddings on CPU. Fail closed on missing or mismatched artifacts, nonfinite values, or zero norms. Store the model revision in index metadata. **Tests:** `tests/unit/test_e5_prefix.py`, `tests/unit/test_faiss_normalization.py`, `tests/integration/test_embedding_revision.py`.
+
+Provision the exact model and tokenizer outside Git and verify their checksums. Both encoder paths load verified local files with `local_files_only=True` and `trust_remote_code=False`. Model weights must use `use_safetensors=True`. Dependency and model verification includes the stack contract test, an explicitly executed CPU smoke test against the pinned files, and the applicable role-scoping regressions.
 
 ### Reranker inclusion
 
@@ -515,6 +518,12 @@ A stack change is permitted **ONLY** when all three conditions hold:
 Meeting all three conditions is necessary but **not sufficient**: the human owner must explicitly approve the change. Until approved, leave the locked stack intact. After approval, update this document, `AGENTS.md`, affected tests, the lockfile, and run relevant regressions.
 
 The same governance applies to changes in locked architecture, scope, and phase order.
+
+### Step 90 owner approval — E5 CPU runtime
+
+The owner approved only `torch==2.15.0` from the explicit PyTorch CPU index `https://download.pytorch.org/whl/cpu`, `transformers==5.23.0`, and `intfloat/multilingual-e5-small` revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`. Only PyTorch uses the CPU index. Keep both dependency pins and the checkpoint revision exact. Further substitutions require a separate §18 approval. The locked architecture, scope, and phase order continue to apply.
+
+At baseline `cb1691a`, `uv run --locked --no-sync python -B -c "from transformers import AutoModel, AutoTokenizer"` exited 1 with `ModuleNotFoundError: No module named 'transformers'`. The corresponding `import torch` probe exited 1 with `ModuleNotFoundError: No module named 'torch'`. FAISS and NumPy imports worked, but the locked environment had no E5 runtime or cached model. A fresh locked install must select compatible CPU wheels for Windows AMD64 and Linux x86-64 on CPython 3.11. Keep dependency hashes in `uv.lock` and record the approved model revision and verified artifact hashes for offline reuse.
 
 ---
 
