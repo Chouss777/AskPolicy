@@ -3,7 +3,7 @@
 import argparse
 from collections.abc import Sequence
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import date
 from hashlib import sha256
 from importlib.metadata import version
@@ -12,15 +12,27 @@ from pathlib import Path
 import sqlite3
 import sys
 from typing import Annotated, Literal
-import unicodedata
 
-import bm25s
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..ingestion.coordinator import ingest_manifest_to_draft
-from ..ingestion.metadata import Language, PolicyMetadata, ReadRole
+from ..ingestion.metadata import Language, ReadRole
 from ..storage.eligibility import PolicyEligibilityResult, select_policy_versions
 from ..storage.snapshot import DraftSnapshotConfig, compute_draft_snapshot_identity
+from .bm25_core import (
+    BM25_OPTIONS,
+    TOKENIZATION,
+    BM25CoreError,
+    DraftDocument,
+    EvidenceChunk,
+    SectionIdentity,
+    bm25s as bm25s,
+    build_text_index,
+    chunk_order,
+    ranked_positions,
+    read_draft_chunks,
+    read_draft_documents as _read_documents,
+)
 
 
 VALIDITY_DATE = date(2026, 9, 1)
@@ -28,11 +40,6 @@ TOP_K = 5
 READINESS_THRESHOLD = 0.0
 DATASET = Path("eval/datasets/dev_candidates.jsonl")
 MANIFEST = Path("data/corpus_manifest.yaml")
-_TOKEN_PATTERN = r"(?u)\b\w\w+\b"
-_BM25S_OPTIONS = {
-    "method": "lucene", "idf_method": "lucene", "k1": 1.5, "b": 0.75,
-    "dtype": "float32", "int_dtype": "int32", "backend": "numpy", "csc_backend": "numpy",
-}
 _SEED_IDS = frozenset(f"dev-candidate-{number:03}" for number in range(1, 6))
 
 
@@ -64,29 +71,6 @@ class _DevelopmentCase(BaseModel):
     case_type: Literal["answerable", "role_sensitive", "unanswerable"]
     annotation_review_status: Literal["human_approved"]
     revalidation_required: bool
-
-
-@dataclass(frozen=True, slots=True)
-class DraftDocument:
-    metadata: PolicyMetadata
-    source_path: str
-    source_sha256: str
-
-
-@dataclass(frozen=True, slots=True)
-class SectionIdentity:
-    document_id: str
-    parent_id: str
-    heading: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class EvidenceChunk:
-    child_id: str
-    section: SectionIdentity
-    document: DraftDocument
-    start: int
-    text: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,27 +109,6 @@ def _read_cases(raw: bytes) -> list[_DevelopmentCase]:
         ):
             raise SmokeEvaluationError("INVALID_SEED_DATASET")
     return sorted(cases, key=lambda case: case.query_id)
-
-
-def _read_documents(connection: sqlite3.Connection) -> dict[str, DraftDocument]:
-    fields = tuple(PolicyMetadata.model_fields)
-    rows = connection.execute(
-        "SELECT " + ", ".join((*fields, "source_path", "source_sha256"))
-        + " FROM draft_documents ORDER BY document_id",
-    )
-    documents = {}
-    for row in rows:
-        metadata = dict(zip(fields, row[:-2], strict=True))
-        metadata["allowed_roles"] = tuple(json.loads(metadata["allowed_roles"]))
-        for name in ("effective_date", "expires_at"):
-            if metadata[name] is not None:
-                metadata[name] = date.fromisoformat(metadata[name])
-        try:
-            validated = PolicyMetadata.model_validate(metadata)
-        except ValidationError:
-            raise SmokeEvaluationError("INVALID_STORED_METADATA") from None
-        documents[validated.document_id] = DraftDocument(validated, row[-2], row[-1])
-    return documents
 
 
 def _public_documents(
@@ -208,27 +171,7 @@ def _load_public_chunks(
     public = _public_documents(documents, eligibility, role)
     if not public:
         raise SmokeEvaluationError("NO_PUBLIC_EVIDENCE")
-    parameters = tuple(public)
-    placeholders = ", ".join("?" for _ in parameters)
-    rows = connection.execute(
-        "SELECT c.child_id, c.document_id, c.parent_id, p.heading, c.start, c.text "
-        "FROM draft_children AS c JOIN draft_parents AS p "
-        "ON p.document_id = c.document_id AND p.parent_id = c.parent_id "
-        f"WHERE c.document_id IN ({placeholders}) ORDER BY c.document_id, c.start, c.child_id",
-        parameters,
-    )
-    return tuple(
-        EvidenceChunk(child_id, SectionIdentity(document_id, parent_id, heading), public[document_id], start, text)
-        for child_id, document_id, parent_id, heading, start, text in rows
-    )
-
-
-def _tokenize(texts: list[str]) -> list[list[str]]:
-    return bm25s.tokenize(
-        [unicodedata.normalize("NFC", text) for text in texts],
-        lower=True, token_pattern=_TOKEN_PATTERN, stopwords=[], stemmer=None,
-        return_ids=False, show_progress=False,
-    )
+    return read_draft_chunks(connection, public)
 
 
 def rank_public_chunks(
@@ -240,7 +183,7 @@ def rank_public_chunks(
     The caller supplies verified draft records and their eligibility result.
     Reject input outside the reviewed role's PUBLIC scope before tokenization.
     """
-    ordered = sorted(chunks, key=lambda chunk: (chunk.section.document_id, chunk.start, chunk.child_id))
+    ordered = sorted(chunks, key=chunk_order)
     current = set(eligibility.eligible_document_ids)
     if any(
         chunk.section.document_id not in current
@@ -252,22 +195,15 @@ def rank_public_chunks(
         raise SmokeEvaluationError("OUT_OF_SCOPE_INDEX_INPUT")
     if len({chunk.child_id for chunk in ordered}) != len(ordered):
         raise SmokeEvaluationError("DUPLICATE_CHILD_ID")
-    tokens = _tokenize([chunk.text for chunk in ordered])
-    if not any(tokens):
+    if not ordered:
         raise SmokeEvaluationError("NO_INDEXABLE_TOKENS")
 
-    index = bm25s.BM25(**_BM25S_OPTIONS)
-    index.index(tokens, create_empty_token=False, show_progress=False)
-    query_tokens = _tokenize([query])[0]
-    if not query_tokens:
-        return ()
-    scores = index.get_scores(query_tokens)
-    candidates = [
-        RankedChunk(chunk.child_id, chunk.section, float(score))
-        for chunk, score in zip(ordered, scores, strict=True)
-        if score > 0
-    ]
-    return tuple(sorted(candidates, key=lambda chunk: (-chunk.score, chunk.child_id))[:TOP_K])
+    try:
+        index = build_text_index([chunk.text for chunk in ordered])
+        ranking = ranked_positions(index, [chunk.child_id for chunk in ordered], query, limit=TOP_K)
+    except BM25CoreError as error:
+        raise SmokeEvaluationError(str(error)) from None
+    return tuple(RankedChunk(ordered[position].child_id, ordered[position].section, score) for position, score in ranking)
 
 
 def recall_at_5(gold: Sequence[SectionIdentity], ranking: Sequence[RankedChunk]) -> float:
@@ -327,12 +263,8 @@ def evaluate_public_smoke(repository_root: Path) -> dict[str, object]:
         "bm25s_version": version("bm25s"),
         "numpy_version": version("numpy"),
         "configuration": {
-            "bm25s": dict(_BM25S_OPTIONS),
-            "tokenization": {
-                "normalization": "NFC", "unicode_version": unicodedata.unidata_version,
-                "lowercase": True, "pattern": _TOKEN_PATTERN,
-                "stopwords": [], "stemmer": None,
-            },
+            "bm25s": asdict(BM25_OPTIONS),
+            "tokenization": {**asdict(TOKENIZATION), "stopwords": list(TOKENIZATION.stopwords)},
             "indexed_text": "exact_stored_child_text",
             "index_order": ["document_id", "child_start", "child_id"],
             "ranking_order": ["score_descending", "child_id_ascending"],
