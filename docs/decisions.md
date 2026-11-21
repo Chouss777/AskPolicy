@@ -81,6 +81,20 @@ The reranker candidate is `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`. Benchmar
 
 Capture pinned embedding and reranker model revisions and the installed Ollama model digest in the reproducibility manifest. Fail validation on unapproved model changes. Do not fabricate a digest; the first approval records the actual installed digest before a run can be declared reproducible.
 
+Step 103 verified `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` revision `1427fd652930e4ba29e8149678df786c240d8825` against the actual provisioned files and completed a real CPU smoke.
+
+| Verified file | Bytes | SHA-256 |
+|---|---:|---|
+| `model.safetensors` | 470592698 | `5daeca2481a76b5976a2bdc32f0a78532b6716da4f8cd3ff59460ef8d2f359b4` |
+| `tokenizer.json` | 17082660 | `62c24cdc13d4c9952d63718d6c9fa4c287974249e16b7ade6d5a85e7bbb75626` |
+| `config.json` | 891 | `cc2cfe51aa3fd759d21d21acf5dfd6994aa67a3c9210636d22e143699d336c77` |
+| `tokenizer_config.json` | 435 | `e7fbfbfa6347b4e414c1cee50d142e2c2f9a895dad68b068ae83a8b564c3837e` |
+| `special_tokens_map.json` | 239 | `378eb3bf733eb16e65792d7e3fda5b8a4631387ca04d2015199c4d4f22ae554d` |
+
+Provision only this allowlist outside Git. The offline loader uses the existing `torch==2.15.0+cpu` installation and `transformers==5.23.0` with CPU float32, `local_files_only=True`, `trust_remote_code=False`, `use_safetensors=True`, and `use_fast=True`. Step 103 permits bounded smoke scoring with overlength rejection above 512 joint query/passage tokens including special tokens. Production overflow handling, segment aggregation and reranker activation remain subject to separate owner decisions. The development quality and latency inclusion gate above remains in force.
+
+Enforcing checks are `tests/unit/test_cross_encoder_checkpoint.py`, `tests/unit/test_cross_encoder_scoring.py`, and the explicitly executed `tests/local/real_cross_encoder_smoke.py`.
+
 ---
 
 ## 3. Corpus Specification
@@ -524,6 +538,10 @@ The same governance applies to changes in locked architecture, scope, and phase 
 The owner approved only `torch==2.15.0` from the explicit PyTorch CPU index `https://download.pytorch.org/whl/cpu`, `transformers==5.23.0`, and `intfloat/multilingual-e5-small` revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`. Only PyTorch uses the CPU index. Keep both dependency pins and the checkpoint revision exact. Further substitutions require a separate §18 approval. The locked architecture, scope, and phase order continue to apply.
 
 At baseline `cb1691a`, `uv run --locked --no-sync python -B -c "from transformers import AutoModel, AutoTokenizer"` exited 1 with `ModuleNotFoundError: No module named 'transformers'`. The corresponding `import torch` probe exited 1 with `ModuleNotFoundError: No module named 'torch'`. FAISS and NumPy imports worked, but the locked environment had no E5 runtime or cached model. A fresh locked install must select compatible CPU wheels for Windows AMD64 and Linux x86-64 on CPython 3.11. Keep dependency hashes in `uv.lock` and record the approved model revision and verified artifact hashes for offline reuse.
+
+### Step 103 owner approval — selected reranker checkpoint
+
+The owner approved the exact reranker revision and five verified artifacts recorded in §2, external provisioning, the offline CPU loader and bounded real smoke scoring. Existing dependencies continue to apply. Step 103 rejects overlength pairs without truncation, splitting or aggregation. Production reranker activation and production overflow handling require separate approval.
 
 ---
 

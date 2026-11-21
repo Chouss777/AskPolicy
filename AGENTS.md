@@ -78,6 +78,20 @@ The owner approved the E5 CPU runtime pins in Step 90 under `docs/decisions.md` 
 
 The reranker is **conditional**: enable in the deployed pipeline only after development-set retrieval quality and measured latency justify it.
 
+Step 103 pins `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` to revision `1427fd652930e4ba29e8149678df786c240d8825` after actual checkpoint verification and a real CPU smoke. The owner approved provisioning only these five artifacts outside Git.
+
+| Verified file | Bytes | SHA-256 |
+|---|---:|---|
+| `model.safetensors` | 470592698 | `5daeca2481a76b5976a2bdc32f0a78532b6716da4f8cd3ff59460ef8d2f359b4` |
+| `tokenizer.json` | 17082660 | `62c24cdc13d4c9952d63718d6c9fa4c287974249e16b7ade6d5a85e7bbb75626` |
+| `config.json` | 891 | `cc2cfe51aa3fd759d21d21acf5dfd6994aa67a3c9210636d22e143699d336c77` |
+| `tokenizer_config.json` | 435 | `e7fbfbfa6347b4e414c1cee50d142e2c2f9a895dad68b068ae83a8b564c3837e` |
+| `special_tokens_map.json` | 239 | `378eb3bf733eb16e65792d7e3fda5b8a4631387ca04d2015199c4d4f22ae554d` |
+
+The verified local loader uses the existing `torch==2.15.0+cpu` installation and `transformers==5.23.0`, CPU float32, `local_files_only=True`, `trust_remote_code=False`, `use_safetensors=True`, and `use_fast=True`. Step 103 approves bounded smoke scoring and rejection above 512 joint query/passage tokens including special tokens. Production segmentation, score aggregation and reranker activation require separate owner approval. The conditional deployment requirement above remains authoritative.
+
+Checkpoint and scoring enforcement uses `tests/unit/test_cross_encoder_checkpoint.py`, `tests/unit/test_cross_encoder_scoring.py`, and the explicitly executed `tests/local/real_cross_encoder_smoke.py`.
+
 Do not introduce LangChain, ChromaDB, Qdrant, Celery, Redis, Kubernetes, vLLM, paid cloud LLM APIs, or agent-orchestration frameworks. Other new runtime dependencies require explicit approval. Follow the stack-change procedure in `docs/decisions.md` §18.
 
 Enforcement: `tests/unit/test_stack_contract.py`, `tests/eval/test_reranker_decision.py`.
