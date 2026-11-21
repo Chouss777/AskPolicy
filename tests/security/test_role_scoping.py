@@ -233,4 +233,6 @@ def test_expected_snapshot_and_missing_endpoints_fail_closed(scoped, secured):
     with pytest.raises(module.RoleBM25Error, match="^SNAPSHOT_MISMATCH$"):
         _search(scoped, context, LEAVE_QUERY, expected_snapshot_id="0" * 64)
     app = create_app(jwt_config=secured.config)
-    assert {(route.path, frozenset(route.methods)) for route in app.routes} == {("/auth/verify", frozenset({"GET"}))}
+    assert {(route.path, frozenset(route.methods)) for route in app.routes} == {
+        ("/auth/verify", frozenset({"GET"})), ("/retrieval/search", frozenset({"POST"})),
+    }

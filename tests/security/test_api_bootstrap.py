@@ -67,6 +67,12 @@ def test_factory_constructs_app_and_registers_real_dependency(api, secured, monk
     for name in JWT_NAMES:
         monkeypatch.delenv(name, raising=False)
     registered = []
+    verifiers = []
+    construct_verifier = api.JWTVerifier
+    def observe_verifier(config):
+        verifier = construct_verifier(config)
+        verifiers.append(verifier)
+        return verifier
     create_dependency = secured.context.make_auth_dependency
 
     def observe_dependency(verifier):
@@ -77,14 +83,30 @@ def test_factory_constructs_app_and_registers_real_dependency(api, secured, monk
         return dependency
 
     monkeypatch.setattr(api, "make_auth_dependency", observe_dependency)
+    monkeypatch.setattr(api, "JWTVerifier", observe_verifier)
     app = api.create_app(jwt_config=secured.config)
     assert isinstance(app, FastAPI)
-    route, = app.routes
-    assert route.path == "/auth/verify"
-    assert route.methods == {"GET"}
+    assert len(app.routes) == 2
+    routes = {(route.path, frozenset(route.methods)):route for route in app.routes}
+    assert set(routes) == {("/auth/verify",frozenset({"GET"})),
+                          ("/retrieval/search",frozenset({"POST"}))}
     dependency, = registered
-    assert [item.call for item in route.dependant.dependencies] == [dependency]
+    verifier, = verifiers
+    assert verifier.config == secured.config
+    auth_route = routes[("/auth/verify",frozenset({"GET"}))]
+    retrieval_route = routes[("/retrieval/search",frozenset({"POST"}))]
+    assert [item.call for item in auth_route.dependant.dependencies] == [dependency]
+    assert retrieval_route.dependant.dependencies[0].call is dependency
+    query_dependency = retrieval_route.dependant.dependencies[1]
+    assert [item.call for item in query_dependency.dependencies] == [dependency]
     _assert_verified(_http(app, secured.sign(), "employee"), "employee")
+    from integration.test_retrieval_api import request_api
+    unavailable = request_api(app, secured.sign(), "employee")
+    assert unavailable.status == 503
+    assert unavailable.json() == {"detail":"Retrieval unavailable"}
+    assert unavailable.headers[b"cache-control"] == b"no-store"
+    _assert_unauthorized(request_api(app, None, "employee"))
+    _assert_forbidden(request_api(app, secured.sign(), "hr"))
 
 
 @pytest.mark.parametrize("missing", JWT_NAMES)

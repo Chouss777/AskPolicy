@@ -353,6 +353,15 @@ def test_offline_index_cannot_grant_read_access_or_add_api_routes(smoke, draft, 
     assert not can_read_document(None, classification=metadata.classification, allowed_roles=metadata.allowed_roles)
     assert not can_read_document(EMPLOYEE, classification=metadata.classification, allowed_roles=metadata.allowed_roles)
     app = create_app(jwt_config=JWTConfig(SecretStr(token_urlsafe(48)), "smoke-test-issuer", "smoke-test-api", "HS256"))
-    route, = app.routes
-    assert (route.path, route.methods) == ("/auth/verify", {"GET"})
-    assert route.dependant.dependencies
+    assert len(app.routes) == 2
+    routes = {(route.path, frozenset(route.methods)): route for route in app.routes}
+    assert set(routes) == {
+        ("/auth/verify", frozenset({"GET"})),
+        ("/retrieval/search", frozenset({"POST"})),
+    }
+    auth_route = routes[("/auth/verify", frozenset({"GET"}))]
+    retrieval_route = routes[("/retrieval/search", frozenset({"POST"}))]
+    dependency, = auth_route.dependant.dependencies
+    assert retrieval_route.dependant.dependencies[0].call is dependency.call
+    query_dependency = retrieval_route.dependant.dependencies[1]
+    assert [item.call for item in query_dependency.dependencies] == [dependency.call]
