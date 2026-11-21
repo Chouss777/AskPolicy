@@ -35,31 +35,32 @@ def encoded(records):
     return b"\n".join(json.dumps(r,ensure_ascii=False).encode() for r in records)+b"\n"
 
 
-def test_all_five_records_resolve_exact_sections_and_three_modes(evaluation,tmp_path):
+def test_all_twenty_records_resolve_exact_sections_and_three_modes(evaluation,tmp_path):
     first=run(evaluation)
     second=run(evaluation)
     assert first["deterministic"]==second["deterministic"]
     assert first["identity_sha256"]==second["identity_sha256"]
     core=first["deterministic"]
-    assert core["status"]=="INCOMPLETE_DEVELOPMENT_COVERAGE"
-    assert core["evaluated_count"]==5 and core["question_family_count"]==4 and core["annotation_gap"]==15
+    assert core["status"]=="DEVELOPMENT_COVERAGE_COMPLETE"
+    assert core["evaluated_count"]==20 and core["question_family_count"]==17 and core["annotation_gap"]==0
+    assert core["positive_metric_denominator"]==14 and core["no_positive_count"]==6
     assert core["required_development_count"]==20 and core["required_held_out_count"]==60
     assert core["dataset_sha256"]==sha256(evaluation.raw).hexdigest()
-    assert core["languages"]=={"fr":5} and core["roles"]=={"employee":3,"hr":2}
+    assert core["languages"]=={"fr":8,"en":6,"ar":6} and core["roles"]=={"employee":10,"hr":3,"finance":3,"it_security":4}
     assert set(core["modes"])=={"bm25","faiss","hybrid"}
     assert core["configurations"]["rrf"]=={"k":60,"top_k":20}
     for mode,data in core["modes"].items():
         assert data["snapshot_id"]==evaluation.env.bundle.snapshot.candidate_snapshot_id
-        assert data["metrics"]["eligible_positive_count"]==3
-        assert data["metrics"]["excluded_no_positive_count"]==2
-        assert [row["metrics"] is None for row in data["cases"]]==[False,False,False,True,True]
+        assert data["metrics"]["eligible_positive_count"]==14
+        assert data["metrics"]["excluded_no_positive_count"]==6
+        assert [row["metrics"] is None for row in data["cases"]]==[not c.authorized_source_sections for c in diagnostic.read_cases(evaluation.raw)]
         for row in data["cases"]:
             for gold in row["gold_sections"]:
                 assert evaluation.env.db.execute(
                     "SELECT count(*) FROM draft_parents WHERE document_id=? AND parent_id=?",
                     (gold["document_id"],gold["parent_id"])).fetchone()==(1,)
         assert data["role_pairs"][0]["negative_restricted_section_hits"]==0
-        assert first["measurements"]["modes"][mode]["sample_count"]==5
+        assert first["measurements"]["modes"][mode]["sample_count"]==20
     target=tmp_path/"runtime/reports/diagnostic.json"
     diagnostic.write_report(first,target,repository_root=tmp_path)
     restored=json.loads(target.read_bytes())
@@ -139,7 +140,7 @@ def test_ambiguous_gold_heading_uses_exact_sql_resolution(evaluation):
 
 def test_report_schema_tampering_rejected(evaluation):
     report=run(evaluation)
-    report["deterministic"]["evaluated_count"]=20
+    report["deterministic"]["evaluated_count"]=5
     with pytest.raises(diagnostic.DiagnosticError,match="INVALID_REPORT"):
         diagnostic.validate_report(report)
     report=run(evaluation)
@@ -172,3 +173,14 @@ def test_gold_resolution_uses_private_validated_sqlite_image(evaluation,monkeypa
     report=run(evaluation)
     assert len(images)==1 and report["deterministic"]["snapshot"]["child_count"]==before[0]
     assert evaluation.env.db.execute("SELECT count(*) FROM draft_children").fetchone()==before
+
+
+def test_historical_seed_retains_incomplete_coverage_and_three_positives(evaluation):
+    raw=(ROOT/"eval/datasets/dev_seed_five.jsonl").read_bytes()
+    report=run(evaluation,raw=raw)
+    core=report["deterministic"]
+    assert core["status"]=="INCOMPLETE_DEVELOPMENT_COVERAGE"
+    assert core["evaluated_count"]==5 and core["annotation_gap"]==15
+    assert core["positive_metric_denominator"]==3 and core["no_positive_count"]==2
+    for data in core["modes"].values():
+        assert data["metrics"]["eligible_positive_count"]==3

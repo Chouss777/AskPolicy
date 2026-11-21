@@ -10,6 +10,7 @@ import sys
 import subprocess
 from hashlib import sha256
 from time import perf_counter
+from uuid import uuid4
 
 import torch
 
@@ -32,7 +33,7 @@ def test_real_dev_retrieval_diagnostic(secured):
     encoder=E5Encoder(Path(os.environ["ASKPOLICY_E5_DIR"]))
     model_seconds=perf_counter()-started
     manifest=(ROOT/"data/corpus_manifest.yaml").read_bytes()
-    raw=(ROOT/diagnostic.DATASET_PATH).read_bytes()
+    raw=(ROOT/"eval/datasets/dev_seed_five.jsonl").read_bytes()
     started=perf_counter()
     with closing(sqlite3.connect(":memory:")) as db:
         ingest_manifest_to_draft(ROOT,db)
@@ -51,7 +52,7 @@ def test_real_dev_retrieval_diagnostic(secured):
         api_overhead_measured=False,random_seed=None,evaluation_utc=datetime.now(UTC).isoformat(),
         evaluator_source_sha256={name:sha256((ROOT/"eval"/name).read_bytes()).hexdigest()
                                  for name in ("retrieval_metrics.py","dev_retrieval_diagnostic.py")})
-    path=ROOT/"runtime/reports/step100_dev_retrieval_diagnostic.json"
+    path=ROOT/"runtime/reports"/("step100_seed_rerun_"+uuid4().hex+".json")
     diagnostic.write_report(report,path,repository_root=ROOT)
     assert report["deterministic"]["evaluated_count"]==5
     assert all(data["unauthorized_hit_count"]==0 for data in report["deterministic"]["modes"].values())

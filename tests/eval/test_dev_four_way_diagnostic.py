@@ -38,30 +38,37 @@ def rehash(report):
     report["identity_sha256"] = sha256(diagnostic.canonical(report["deterministic"])).hexdigest()
 
 
-def test_identical_four_mode_contract_and_three_positive_denominator(evaluation):
+def test_identical_four_mode_contract_and_fourteen_positive_denominator(evaluation):
     session,raw,run = evaluation
     report = run()
     core = report["deterministic"]
     assert tuple(core["modes"]) == diagnostic.MODES
-    assert core["evaluated_count"] == 5 and core["positive_metric_denominator"] == 3
-    assert core["no_positive_count"] == 2 and core["question_family_count"] == 4
+    assert core["evaluated_count"] == 20 and core["positive_metric_denominator"] == 14
+    assert core["no_positive_count"] == 6 and core["question_family_count"] == 17
     assert core["required_development_count"] == 20 and core["required_held_out_count"] == 60
-    assert core["annotation_gap"] == 15 and core["held_out_evaluated_count"] == 0
-    assert core["status"] == "INCOMPLETE_DEVELOPMENT_COVERAGE"
+    assert core["annotation_gap"] == 0 and core["held_out_evaluated_count"] == 0
+    assert core["status"] == "DEVELOPMENT_COVERAGE_COMPLETE"
     assert core["validation_status"] == "VALIDATED_OFFLINE_DIAGNOSTIC"
     assert not core["full_ablation_complete"] and not core["production_reranker_enabled"]
     assert core["dataset_sha256"] == sha256(raw).hexdigest()
+    assert core["languages"] == {"fr":8,"en":6,"ar":6}
+    assert core["roles"] == {"employee":10,"hr":3,"finance":3,"it_security":4}
     expected_ids = [c.query_id for c in diagnostic.base.read_cases(raw)]
     for mode,data in core["modes"].items():
         assert data["snapshot_id"] == session.handle.bm25.snapshot.candidate_snapshot_id
         assert data["published_release_id"] == session.handle.release_id
         assert data["dataset_sha256"] == core["dataset_sha256"]
         assert [c["query_id"] for c in data["cases"]] == expected_ids
-        assert [c["metrics"] is None for c in data["cases"]] == [False,False,False,True,True]
-        assert data["metrics"]["eligible_positive_count"] == 3
-        assert data["metrics"]["excluded_no_positive_count"] == 2
+        assert [c["metrics"] is None for c in data["cases"]] == [not c.authorized_source_sections for c in diagnostic.base.read_cases(raw)]
+        assert data["metrics"]["eligible_positive_count"] == 14
+        assert data["metrics"]["excluded_no_positive_count"] == 6
         assert data["unauthorized_hit_count"] == 0
         assert data["role_pairs"][0]["negative_restricted_section_hits"] == 0
+        assert len(data["role_pairs"]) == 3
+        assert all(p["negative_restricted_section_hits"] == 0 for p in data["role_pairs"])
+        timing = report["measurements"]["modes"][mode]
+        assert timing["sample_count"] == 20
+        assert timing["interpretation"] == "exploratory_20_query_samples_not_production_api_latency"
     left, right = (core["modes"][m]["cases"] for m in ("hybrid","hybrid_rerank"))
     for before,after in zip(left,right,strict=True):
         assert before["gold_sections"] == after["gold_sections"]
@@ -151,7 +158,7 @@ def test_report_schema_and_binding_reject_tampering(evaluation,defect):
     elif defect == "budget":
         core["configurations"]["hybrid"]["rrf_constant"] = 10
     elif defect == "coverage":
-        core["annotation_gap"] = 0
+        core["annotation_gap"] = 15
     elif defect == "full_claim":
         core["full_ablation_complete"] = True
     elif defect == "unauthorized":
@@ -195,10 +202,10 @@ def test_overflow_failed_case_has_no_fourth_metrics_or_comparable_macro(evaluati
     assert core["reranker_failures"] == 1
     assert fourth["cases"][0]["status"] == "FAILED_TOKEN_LIMIT"
     assert fourth["cases"][0]["metrics"] is None and fourth["cases"][0]["ranking"] == []
-    assert fourth["metrics"] is None and fourth["completed_positive_count"] == 2
+    assert fourth["metrics"] is None and fourth["completed_positive_count"] == 13
     assert core["comparisons"]["paired_hybrid_differences"][0]["differences"] is None
     assert core["comparisons"]["rerank_minus_baseline_macro"]["hybrid"] is None
-    assert core["modes"]["hybrid"]["metrics"]["eligible_positive_count"] == 3
+    assert core["modes"]["hybrid"]["metrics"]["eligible_positive_count"] == 14
 
 
 def test_wrong_active_role_provider_is_rejected_before_warmup(evaluation):
@@ -214,6 +221,18 @@ def test_model_failure_aborts_without_fake_fourth_scores(evaluation,monkeypatch)
     monkeypatch.setattr(diagnostic,"rerank_published_hits",fail)
     with pytest.raises(diagnostic.FourWayDiagnosticError):
         evaluation[2]()
+
+
+def test_historical_five_case_coverage_remains_incomplete(evaluation):
+    raw=(ROOT/"eval/datasets/dev_seed_five.jsonl").read_bytes()
+    report=evaluation[2](raw=raw)
+    core=report["deterministic"]
+    assert core["status"] == "INCOMPLETE_DEVELOPMENT_COVERAGE"
+    assert core["evaluated_count"] == 5 and core["annotation_gap"] == 15
+    assert core["positive_metric_denominator"] == 3 and core["no_positive_count"] == 2
+    assert core["held_out_evaluated_count"] == 0
+    assert core["full_ablation_complete"] is False and core["production_reranker_enabled"] is False
+    assert report["measurements"]["modes"]["hybrid_rerank"]["interpretation"] == "exploratory_5_query_samples_not_production_api_latency"
 
 
 def test_atomic_safe_report_and_no_raw_text_or_heldout_access(evaluation,tmp_path,monkeypatch):

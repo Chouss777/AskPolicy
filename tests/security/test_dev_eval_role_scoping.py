@@ -7,7 +7,7 @@ import pytest
 
 from eval.test_dev_retrieval_diagnostic import evaluation,run,encoded,diagnostic
 from integration.test_embedding_revision import dense_env
-from security.test_auth import secured
+from security.test_auth import ROOT,secured
 
 
 @pytest.mark.parametrize("role",["employee","hr","finance","it_security"])
@@ -48,9 +48,12 @@ def test_failed_gate_prevents_scoring_and_query_warmup(evaluation,secured,monkey
 
 
 def test_multigrant_context_uses_approved_active_role_and_pair_stays_separate(evaluation,secured):
-    token=secured.sign(roles=["employee","hr"])
+    seed_token=secured.sign(roles=["employee","hr"])
+    seed_raw=(ROOT/"eval/datasets/dev_seed_five.jsonl").read_bytes()
+    seed_report=run(evaluation,raw=seed_raw,provider=lambda role:secured.authenticate(seed_token,role))
+    token=secured.sign(roles=["employee","hr","finance","it_security"])
     report=run(evaluation,provider=lambda role:secured.authenticate(token,role))
-    for data in report["deterministic"]["modes"].values():
+    for data in [*seed_report["deterministic"]["modes"].values(),*report["deterministic"]["modes"].values()]:
         positive,negative=data["cases"][2:4]
         assert positive["active_role"]=="hr" and positive["metrics"] is not None
         assert negative["active_role"]=="employee" and negative["metrics"] is None

@@ -49,7 +49,7 @@ def test_real_dev_four_way_diagnostic(secured):
         root = ROOT / "runtime" / ("step107-published-" + uuid4().hex)
         options = dict(manifest=(ROOT / "data/corpus_manifest.yaml").read_bytes(),
                        snapshot_config=DraftSnapshotConfig(),validity_date=diagnostic.DAY,encoder=e5)
-        raw = (ROOT / diagnostic.base.DATASET_PATH).read_bytes()
+        raw = (ROOT / "eval/datasets/dev_seed_five.jsonl").read_bytes()
         cases = diagnostic.base.read_cases(raw)
         assert len(cases) == 5
         stage_seconds = []
@@ -117,7 +117,7 @@ def test_real_dev_four_way_diagnostic(secured):
             session_total_seconds=perf_counter()-started,
             limitations=[
                 "Five approved French executions, four question families, three positive cases.",
-                "Fifteen development annotations remain missing. Held-out cases were not read.",
+                "Historical five-case seed run only; the canonical dataset has 20 approved cases. Held-out cases were not read.",
                 "Five samples per mode, one measured execution per query, exploratory offline CPU latency.",
                 "Warm-up is one E5 query and one synthetic Cross-Encoder pair without gold.",
                 "No production API, generation, refusal accuracy or final ablation acceptance measured.",
@@ -127,8 +127,9 @@ def test_real_dev_four_way_diagnostic(secured):
         )
         report["measurements"]["session"] = session
         diagnostic.validate_report(report)
-        target = ROOT / diagnostic.REPORT_PATH
-        diagnostic.write_report(report,target,repository_root=ROOT)
+        # Keep prior Step 107 measurements intact; this run has its own root.
+        target = root / diagnostic.REPORT_PATH
+        diagnostic.write_report(report,target,repository_root=root)
         print(json.dumps(dict(report_path=str(target),metrics={m:d["metrics"] for m,d in core["modes"].items()},
             gold_ranks={m:[dict(query_id=c["query_id"],gold_ranks=c["gold_ranks"]) for c in d["cases"]]
                         for m,d in core["modes"].items()},comparisons=core["comparisons"],

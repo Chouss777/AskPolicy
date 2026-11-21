@@ -36,6 +36,13 @@ class DiagnosticSecurityError(DiagnosticError):
         super().__init__("UNAUTHORIZED_EVIDENCE")
 
 
+def coverage_status(count):
+    if type(count) is not int or not 1 <= count <= 20:
+        raise DiagnosticError("INVALID_DEVELOPMENT_COUNT")
+    return ("DEVELOPMENT_COVERAGE_COMPLETE" if count == 20
+            else "INCOMPLETE_DEVELOPMENT_COVERAGE")
+
+
 def read_cases(raw: bytes):
     try:
         cases = seed._read_cases(raw)
@@ -174,10 +181,12 @@ def evaluate(connection, *, manifest: bytes, raw_dataset: bytes, bm25, faiss, co
                 total_seconds=sum(durations), p50_seconds=percentile(durations,50),
                 p95_seconds=percentile(durations,95), percentile_method="linear-(n-1)",
                 interpretation="exploratory_small_sample_not_production_latency")
-        core = dict(evaluation_kind="development_three_way_diagnostic", status="INCOMPLETE_DEVELOPMENT_COVERAGE",
+        core = dict(evaluation_kind="development_three_way_diagnostic", status=coverage_status(len(cases)),
             authorized_full_count=80, required_development_count=20, required_held_out_count=60,
             held_out_evaluated_count=0,
             evaluated_count=len(cases), annotation_gap=20-len(cases),
+            positive_metric_denominator=sum(bool(g) for g in gold.values()),
+            no_positive_count=sum(not g for g in gold.values()),
             question_family_count=len({c.question_family_id for c in cases}),
             languages=dict(Counter(c.language for c in cases)), roles=dict(Counter(c.active_role for c in cases)),
             case_types=dict(Counter(c.case_type for c in cases)),
@@ -241,7 +250,8 @@ def validate_report(report):
     try:
         core = report["deterministic"]
         if (core["evaluation_kind"] != "development_three_way_diagnostic"
-            or core["status"] != "INCOMPLETE_DEVELOPMENT_COVERAGE"
+            or core["status"] != coverage_status(core["evaluated_count"])
+            or core["annotation_gap"] != 20-core["evaluated_count"]
             or set(core["modes"]) != set(MODES)
             or core["required_development_count"] != 20 or core["required_held_out_count"] != 60
             or core["authorized_full_count"] != 80
@@ -255,6 +265,9 @@ def validate_report(report):
                 or data["metrics"] != macro_metrics([c["metrics"] for c in data["cases"]])
                 or data["unauthorized_hit_count"] != 0 or data["violating_query_count"] != 0
                 or report["measurements"]["modes"][mode]["sample_count"] != core["evaluated_count"]):
+                raise ValueError()
+            if (core["positive_metric_denominator"] != sum(bool(c["gold_sections"]) for c in data["cases"])
+                or core["no_positive_count"] != sum(not c["gold_sections"] for c in data["cases"])):
                 raise ValueError()
             ids = [row["query_id"] for row in data["cases"]]
             if len(set(ids)) != len(ids) or ids != sorted(ids):

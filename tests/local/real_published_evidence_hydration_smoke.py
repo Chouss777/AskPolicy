@@ -44,7 +44,7 @@ def test_real_published_evidence_hydration_smoke(secured):
 
     started = perf_counter()
     torch.set_num_threads(4)
-    raw_cases = (ROOT / "eval/datasets/dev_candidates.jsonl").read_bytes()
+    raw_cases = (ROOT / "eval/datasets/dev_seed_five.jsonl").read_bytes()
     cases = read_cases(raw_cases)
     assert len(cases) == 5
     assert all(c.annotation_review_status == "human_approved" and not c.revalidation_required for c in cases)

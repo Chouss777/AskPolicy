@@ -1,0 +1,118 @@
+{
+  "approval_date": "2026-11-21",
+  "approval_source": "explicit_project_owner_chat_decision",
+  "approved_new_ids": [
+    "dev-candidate-006",
+    "dev-candidate-007",
+    "dev-candidate-008",
+    "dev-candidate-009",
+    "dev-candidate-010",
+    "dev-candidate-011",
+    "dev-candidate-012",
+    "dev-candidate-013",
+    "dev-candidate-014",
+    "dev-candidate-015",
+    "dev-candidate-016",
+    "dev-candidate-017",
+    "dev-candidate-018",
+    "dev-candidate-019",
+    "dev-candidate-020"
+  ],
+  "baseline_commit": "5ca36a4880452a23e0f6c18545bd83254e66bcdf",
+  "canonical_dataset_sha256": "d3280f8570ca81f2f1b2c300e9e2c1385a1d5113f07d7f42d1f286331551dc5b",
+  "canonical_record_sha256": {
+    "dev-candidate-001": "dedc171f9555f079aa5b396e83180d329d4ea0b2d0337c8ba4a8a9c2e846d14a",
+    "dev-candidate-002": "1f764b7127f4da096cbe142c153987a1be6dc613bc9dd8a3acc4b082f6c28e1b",
+    "dev-candidate-003": "0e95a03aa150db4804feb0cd7f555e14ff8c1cd8cab3424546650a2f2c2c5ae7",
+    "dev-candidate-004": "74e5f68cb78489759037a664f8b453a6cf01c01e7a85d9f384ffc48ef695aca2",
+    "dev-candidate-005": "bb29e101b3ee4ea4ca40364e07b6b5ac7869805965e7fc16f2ab10baf19252ea",
+    "dev-candidate-006": "2adc7a3e0e24809e0506eb32e4b548ccdbbf41e9dbfefcf34781ccb794db8d89",
+    "dev-candidate-007": "e1c5abeca0e460e1850d209665c9126fe46bb69ab6b5772190dc8917fcc99081",
+    "dev-candidate-008": "f6b8fc010db35f708221cfa5972f9cfaea6818f5bfe34324a6e46eef34f773f3",
+    "dev-candidate-009": "74adf203dfef956991741f469fae6cd73f002c0a03dd7c99d7c8b9346452330b",
+    "dev-candidate-010": "47870d00272f86dcef794145cceeab19729cdd5c58862de1db2c029aecc33696",
+    "dev-candidate-011": "7242422c0ed4bc46dff77ee25cd60b325fc6e26b1753ca1bd7ab060b01f8aa3e",
+    "dev-candidate-012": "f1c804141742d8da583ce84bc18622168a9f07e21baf660cb90b19fd6744036f",
+    "dev-candidate-013": "1b94edacacbf98fe78de382615d334ba553a05df7c7c1e7b597fc9ede617b74d",
+    "dev-candidate-014": "bbf6b00794d5d8e564364b2d664f864adc67341c54463698bd7455d3877f31c5",
+    "dev-candidate-015": "9977b66b8af2da23a8caf4929ffda06092ef39b454b503ba8a1514da0661d99b",
+    "dev-candidate-016": "0a327e9bd26f5aca3b9ce36092964142758dd4a257f2d01b6f752f7f7db9cfc7",
+    "dev-candidate-017": "b03c174a69ca69bfc061933cad1fc32df509e8265309f287bbb1dcbc09c06fe4",
+    "dev-candidate-018": "cd044967693292441b91455b2c26a82675efcecde9a645b249b1220ca5a2a69d",
+    "dev-candidate-019": "07dcf214976b47be4668eaf75c8a9fc674c72ca0466c8d153f5493cae9e1597a",
+    "dev-candidate-020": "75527cfa2737a1fba3f951638dfee3e0df14b4ef38fd0bdc115d06ec11c009f9"
+  },
+  "case_013_correction": {
+    "contextual_references": [
+      {
+        "document_id": "EXPENSES-001-AR-V2",
+        "relevance_grade": 2,
+        "section_heading": "1. الهدف ونطاق التطبيق"
+      },
+      {
+        "document_id": "EXPENSES-001-EN-V2",
+        "relevance_grade": 2,
+        "section_heading": "1. Purpose and scope"
+      },
+      {
+        "document_id": "EXPENSES-001-FR-V2",
+        "relevance_grade": 2,
+        "section_heading": "1. Objet et champ d’application"
+      }
+    ],
+    "contextual_treatment": "CONTEXTUAL_ONLY_NOT_POSITIVE_GOLD",
+    "other_canonical_fields_unchanged": true,
+    "query_id": "dev-candidate-013",
+    "retained_positive_gold": [
+      {
+        "document_id": "EXPENSES-001-AR-V2",
+        "relevance_grade": 3,
+        "section_heading": "4. المراجعة والموافقة"
+      },
+      {
+        "document_id": "EXPENSES-001-EN-V2",
+        "relevance_grade": 3,
+        "section_heading": "4. Review and approval"
+      },
+      {
+        "document_id": "EXPENSES-001-FR-V2",
+        "relevance_grade": 3,
+        "section_heading": "4. Vérification et approbation"
+      }
+    ]
+  },
+  "counts": {
+    "case_types": {
+      "answerable": 11,
+      "role_sensitive": 6,
+      "unanswerable": 3
+    },
+    "executions": 20,
+    "languages": {
+      "ar": 6,
+      "en": 6,
+      "fr": 8
+    },
+    "new_positive_source_references": 47,
+    "no_positive_executions": 6,
+    "positive_gold_executions": 14,
+    "question_families": 17,
+    "role_sensitive_pairs": 3,
+    "roles": {
+      "employee": 10,
+      "finance": 3,
+      "hr": 3,
+      "it_security": 4
+    },
+    "total_positive_source_references": 50
+  },
+  "format": "askpolicy_development_annotation_approval",
+  "held_out_labels_untouched": true,
+  "model_deployment_approved": false,
+  "original_five_case_sha256": "dce7427c1e096b5d0cd81f6b928883a0ef2c707f0cfa6dce7826d66f9aff916c",
+  "seed_fixture_sha256": "dce7427c1e096b5d0cd81f6b928883a0ef2c707f0cfa6dce7826d66f9aff916c",
+  "step109_proposal_sha256": "6cf013bfd4b1d16108f03d2f1808e7a3dc771201694a3adf69a49ef3048f893c",
+  "step109_review_packet_sha256": "452cead212fce6db1efed682187b400d9681ae6ea8e5e0d898093ad0c4e9b09a",
+  "trusted_validity_date": "2026-09-01",
+  "version": 1
+}

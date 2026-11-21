@@ -54,7 +54,7 @@ BASELINE_HASHES = {
     "data/policies/fr/PROCUREMENT-001-FR-V1.md": "a2d8e1d96e0fa6d7b5f1437f830ecee1dc27fd6dfc30c9dab332ea4cc3b66fc3",
     "data/policies/fr/REMOTE-001-FR-V2.md": "19b9ddca80f968d258ce5119363dbd8be2a70706cc73a099b237dbf0f56516c7",
     "data/policies/fr/TRAVEL-001-FR-V1.md": "9669edb6b8017990973835adea2f2637aa846b77cc6fbc68ac39f6cc3ec92f6c",
-    "eval/datasets/dev_candidates.jsonl": "dce7427c1e096b5d0cd81f6b928883a0ef2c707f0cfa6dce7826d66f9aff916c",
+    "eval/datasets/dev_seed_five.jsonl": "dce7427c1e096b5d0cd81f6b928883a0ef2c707f0cfa6dce7826d66f9aff916c",
 }
 
 IDENTITY_COLUMNS = (

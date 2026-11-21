@@ -38,7 +38,7 @@ from .bm25_core import (
 VALIDITY_DATE = date(2026, 9, 1)
 TOP_K = 5
 READINESS_THRESHOLD = 0.0
-DATASET = Path("eval/datasets/dev_candidates.jsonl")
+DATASET = Path("eval/datasets/dev_seed_five.jsonl")
 MANIFEST = Path("data/corpus_manifest.yaml")
 _SEED_IDS = frozenset(f"dev-candidate-{number:03}" for number in range(1, 6))
 

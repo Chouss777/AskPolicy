@@ -48,7 +48,7 @@ HISTORICAL_METADATA = {
     "DATA-001-FR-V1": ("Politique de gestion des données — Version 1", "IT Security", "INTERNAL", ALL_READ_ROLES),
 }
 VALIDITY_TIME = date(2026, 10, 1)
-DEV_DATASET = "eval/datasets/dev_candidates.jsonl"
+DEV_DATASET = "eval/datasets/dev_seed_five.jsonl"
 
 # Baseline af25189. Text hashes normalize line endings across checkouts.
 ACTIVE_HASHES = {

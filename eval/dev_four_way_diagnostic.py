@@ -88,7 +88,7 @@ def _timing(rows):
     return dict(sample_count=len(rows), per_case_seconds=rows,
                 p50_seconds=percentile(seconds,50), p95_seconds=percentile(seconds,95),
                 percentile_method="linear-(n-1)", state="warm_after_explicit_model_warmups",
-                interpretation="exploratory_five_query_samples_not_production_api_latency")
+                interpretation=f"exploratory_{len(rows)}_query_samples_not_production_api_latency")
 
 
 def _evaluate(handle, *, release_root, manifest, raw_dataset, context_for_role, encoder,
@@ -184,7 +184,7 @@ def _evaluate(handle, *, release_root, manifest, raw_dataset, context_for_role, 
             role_pairs=base._role_pairs(cases,gold,rows[mode]),
         )
     core = dict(
-        evaluation_kind="development_four_way_diagnostic",status="INCOMPLETE_DEVELOPMENT_COVERAGE",
+        evaluation_kind="development_four_way_diagnostic",status=base.coverage_status(len(cases)),
         validation_status="VALIDATED_OFFLINE_DIAGNOSTIC",
         required_development_count=20,required_held_out_count=60,held_out_evaluated_count=0,
         evaluated_count=len(cases),annotation_gap=20-len(cases),positive_metric_denominator=positive_count,
@@ -232,7 +232,7 @@ def validate_report(report):
         core = report["deterministic"]
         if (set(report) != {"deterministic","identity_sha256","measurements"} or set(core) != CORE_FIELDS
             or core["evaluation_kind"] != "development_four_way_diagnostic"
-            or core["status"] != "INCOMPLETE_DEVELOPMENT_COVERAGE"
+            or core["status"] != base.coverage_status(core["evaluated_count"])
             or core["validation_status"] != "VALIDATED_OFFLINE_DIAGNOSTIC"
             or set(core["modes"]) != set(MODES) or core["required_development_count"] != 20
             or core["required_held_out_count"] != 60 or core["held_out_evaluated_count"] != 0

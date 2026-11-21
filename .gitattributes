@@ -1,0 +1,4 @@
+.gitattributes text eol=lf
+eval/datasets/dev_candidates.jsonl text eol=lf
+eval/datasets/dev_seed_five.jsonl text eol=lf
+eval/datasets/dev_annotation_approval.json text eol=lf

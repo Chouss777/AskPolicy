@@ -6,7 +6,7 @@ import pytest
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-CANDIDATE_DATASET = REPOSITORY_ROOT / "eval" / "datasets" / "dev_candidates.jsonl"
+CANDIDATE_DATASET = REPOSITORY_ROOT / "eval" / "datasets" / "dev_seed_five.jsonl"
 ANNOTATION_REVIEW = REPOSITORY_ROOT / "docs" / "annotation-review.md"
 POLICY_DIRECTORY = REPOSITORY_ROOT / "data" / "policies" / "fr"
 TRAVEL_DOCUMENT = "TRAVEL-001-FR-V1"
