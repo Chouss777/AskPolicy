@@ -137,6 +137,7 @@ class _BoundScorer:
 class RoleBM25Index:
     metadata: RoleBM25Metadata
     _scorer: _BoundScorer = field(repr=False, compare=False)
+    _engine: object = field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -228,16 +229,21 @@ def _build_index(
         raise RoleBM25Error("INVALID_CHILD_MEMBERSHIP")
 
     model = build_text_index([chunk.text for chunk in chunks])
+    return bind_text_index(metadata, children, model)
+
+
+def bind_text_index(metadata: RoleBM25Metadata, children: tuple[IndexedChild, ...], model: object) -> RoleBM25Index:
+    """Bind a validated loaded engine to the original ordered child catalog."""
     child_ids = tuple(child.child_id for child in children)
     snapshot_id = metadata.candidate_snapshot_id
 
     def search(query: str) -> tuple[RoleBM25Hit, ...]:
         return tuple(
             RoleBM25Hit(children[position], snapshot_id, score)
-            for position, score in ranked_positions(model, child_ids, query, limit=configuration.top_k)
+            for position, score in ranked_positions(model, child_ids, query, limit=metadata.configuration.top_k)
         )
 
-    return RoleBM25Index(metadata, _BoundScorer(metadata.fingerprint, search))
+    return RoleBM25Index(metadata, _BoundScorer(metadata.fingerprint, search), model)
 
 
 @contextmanager
