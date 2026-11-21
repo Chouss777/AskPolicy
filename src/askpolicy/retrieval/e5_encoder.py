@@ -2,7 +2,8 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from hashlib import file_digest
+from hashlib import file_digest, sha256
+import json
 from pathlib import Path
 from types import MappingProxyType
 from typing import Literal
@@ -24,6 +25,11 @@ _ARTIFACT_SHA256 = MappingProxyType({
     "tokenizer.json": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39",
     "tokenizer_config.json": "a1d6bc8734a6f635dc158508bef000f8e2e5a759c7d92f984b2c86e5ff53425b",
 })
+
+
+ARTIFACT_FINGERPRINT = sha256(json.dumps(
+    dict(_ARTIFACT_SHA256), sort_keys=True, separators=(",", ":"),
+).encode("ascii")).hexdigest()
 
 
 class E5EncodingError(ValueError):
@@ -85,8 +91,8 @@ class E5Encoder:
     """Load a checksum-verified revision directory and encode batches on CPU.
 
     The tokenizer counts prefixed text with special tokens before inference.
-    Oversized chunks need deterministic, token-aware splitting that preserves
-    original spans and authorization when the dense indexing stage is added.
+    The dense index builder measures original source slices with this same
+    tokenizer before submitting bounded batches for passage encoding.
     """
 
     model_id = MODEL_ID
@@ -122,6 +128,20 @@ class E5Encoder:
             raise E5EncodingError("MODEL_LOAD_FAILED") from None
         self._tokenizer = tokenizer
         self._model = model
+        self.artifact_fingerprint = ARTIFACT_FINGERPRINT
+
+    def passage_token_count(self, text: str) -> int:
+        """Measure an exact source slice with the same prefix and special tokens as inference."""
+        try:
+            ids = self._tokenizer(
+                "passage: " + text, add_special_tokens=True, padding=False,
+                truncation=False, verbose=False,
+            )["input_ids"]
+            if not ids:
+                raise E5EncodingError("INVALID_TOKENIZER_OUTPUT")
+            return len(ids)
+        except (KeyError, RuntimeError, TypeError, ValueError):
+            raise E5EncodingError("INVALID_TOKENIZER_OUTPUT") from None
 
     def encode_queries(self, texts: Sequence[str]) -> EmbeddingBatch:
         return self._encode(texts, prefix="query: ")

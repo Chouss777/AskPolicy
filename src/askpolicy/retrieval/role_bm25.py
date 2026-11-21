@@ -1,7 +1,7 @@
 """Build and search role-scoped BM25S indexes for an unpublished SQLite draft."""
 
-from collections.abc import Callable, Mapping
-from contextlib import closing
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import closing, contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from hashlib import sha256
@@ -240,11 +240,12 @@ def _build_index(
     return RoleBM25Index(metadata, _BoundScorer(metadata.fingerprint, search))
 
 
-def build_role_bm25_bundle(
+@contextmanager
+def validated_role_draft(
     connection: sqlite3.Connection, *, manifest: bytes, snapshot_config: DraftSnapshotConfig,
     validity_date: date, expected_snapshot_id: str | None = None,
-) -> RoleBM25Bundle:
-    """Verify and build all four role indexes from one private SQLite image.
+) -> Iterator[tuple[sqlite3.Connection, _DraftBinding]]:
+    """Bind role membership and extraction to one private SQLite image.
 
     The caller supplies a committed draft, approved manifest, and trusted date.
     A SQLite backup captures the image atomically even with a separate writer.
@@ -253,10 +254,10 @@ def build_role_bm25_bundle(
     """
     if type(validity_date) is not date:
         raise RoleBM25Error("INVALID_VALIDITY_DATE")
-    try:
-        if connection.in_transaction:
-            raise RoleBM25Error("TRANSACTION_ACTIVE")
-        with closing(sqlite3.connect(":memory:")) as image:
+    with closing(sqlite3.connect(":memory:")) as image:
+        try:
+            if connection.in_transaction:
+                raise RoleBM25Error("TRANSACTION_ACTIVE")
             try:
                 connection.backup(image, name="main", progress=_reject_busy_copy)
             except sqlite3.Error:
@@ -272,17 +273,34 @@ def build_role_bm25_bundle(
             )
             catalog = _read_catalog(image, documents, eligibility)
             draft = _DraftBinding(snapshot, eligibility, MappingProxyType(documents), MappingProxyType(catalog))
+        except SnapshotIdentityError as error:
+            raise RoleBM25Error("INVALID_DRAFT", detail_code=error.code) from None
+        except PolicyEligibilityError as error:
+            raise RoleBM25Error("INVALID_ELIGIBILITY", detail_code=error.code) from None
+        except RoleBM25Error:
+            raise
+        except (sqlite3.Error, ValueError, RuntimeError, OverflowError):
+            raise RoleBM25Error("INDEX_BUILD_FAILED") from None
+        yield image, draft
+
+
+def build_role_bm25_bundle(
+    connection: sqlite3.Connection, *, manifest: bytes, snapshot_config: DraftSnapshotConfig,
+    validity_date: date, expected_snapshot_id: str | None = None,
+) -> RoleBM25Bundle:
+    """Build every lexical index from the same validated private draft."""
+    try:
+        with validated_role_draft(
+            connection, manifest=manifest, snapshot_config=snapshot_config,
+            validity_date=validity_date, expected_snapshot_id=expected_snapshot_id,
+        ) as (image, draft):
             configuration = RoleBM25Configuration(version("bm25s"), version("numpy"))
             indexes = tuple(_build_index(image, draft, role, configuration) for role in _READ_ROLES)
-    except SnapshotIdentityError as error:
-        raise RoleBM25Error("INVALID_DRAFT", detail_code=error.code) from None
-    except PolicyEligibilityError as error:
-        raise RoleBM25Error("INVALID_ELIGIBILITY", detail_code=error.code) from None
+            return RoleBM25Bundle(indexes, draft)
     except RoleBM25Error:
         raise
     except (sqlite3.Error, ValueError, RuntimeError, OverflowError):
         raise RoleBM25Error("INDEX_BUILD_FAILED") from None
-    return RoleBM25Bundle(indexes, draft)
 
 
 def _verified_index(bundle: RoleBM25Bundle, role: ReadRole) -> RoleBM25Index:
