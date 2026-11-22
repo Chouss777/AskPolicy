@@ -77,6 +77,75 @@ The reranker candidate is `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`. Benchmar
 
 **Enforcing test:** `tests/eval/test_reranker_decision.py`.
 
+### Step 116 owner decision — v1 retrieval baseline
+
+On 2026-11-22, the project owner explicitly approved retaining **Hybrid BM25S + E5/FAISS RRF** as the AskPolicy v1 retrieval baseline, with **production Cross-Encoder reranking disabled**. Preserve BM25, FAISS, Hybrid RRF, and Hybrid RRF + Cross-Encoder for evaluation. No retrieval architecture, algorithm, model revision, ranking budget, or configuration change is approved by this decision.
+
+FAISS-only selection and any embedding fine-tuning are deferred until **after the v1 portfolio release**. This is a deferral, not advance approval: any later architecture or scope change still requires separate approval under §18; fine-tuning remains out of scope under §22 and `AGENTS.md` §19 until explicitly approved.
+
+The owner acknowledges that **FAISS outperformed Hybrid on all three macro quality metrics in the small approved development sample**. Retaining Hybrid is a deliberate decision for architecture continuity, preservation of tested RBAC boundaries, reproducibility, and completion of v1. It is not a claim that Hybrid won the benchmark or that FAISS is inherently less secure. No statistical superiority or broader multilingual performance conclusion follows from this sample.
+
+#### Measured Step 112–114 evidence
+
+Step 112 executed the four modes on the same published snapshot, approved labels, queries and role conditions: 20 development executions, 14 positive-gold cases, six no-positive cases excluded from quality means, 17 question families and 50 gold section references. Positive language groups were FR 6, EN 4 and AR 4. Step 114 independently verified the stored per-case/macro metrics and all 20 RRF reconstructions. This decision records those historical measurements; Step 116 does not rerun model inference or a retrieval benchmark.
+
+| Mode | Recall@5 | MRR@10 | nDCG@10 | Warm p50 seconds | Warm p95 seconds |
+|---|---:|---:|---:|---:|---:|
+| BM25 | 0.5476190476190476 | 0.9523809523809523 | 0.6104075558218088 | 0.0034319000005780254 | 0.004305120000935859 |
+| FAISS | 0.5892857142857142 | 1.0 | 0.7219831671154645 | 0.021969399998852168 | 0.026169804999699408 |
+| Hybrid | 0.5357142857142856 | 0.9642857142857143 | 0.6287460933335888 | 0.04606510000121489 | 0.049169684998560115 |
+| Hybrid + CE | 0.6924603174603174 | 0.869047619047619 | 0.719221936220623 | 0.48695730000144977 | 0.5658439600001657 |
+
+Cross-Encoder versus Hybrid increased Recall@5 by 0.15674603174603186 and nDCG@10 by 0.09047584288703425, but reduced MRR@10 by 0.09523809523809534. Warm total time increased from 0.9168448999953398 to 9.797386600002937 seconds (10.685980365984188 times). Cases `dev-candidate-009` and `dev-candidate-010` both changed from first-relevant rank 1 to 3. In 009, the original rank-1 gold child actually moved to rank 4; another gold child became rank 3. The owner **does not approve Cross-Encoder activation**, given the measured CPU latency and ranking regressions despite the Recall/nDCG gains. No arbitrary quality or latency threshold is introduced.
+
+These were exploratory offline CPU float32 timings on Windows AMD64, Intel Family 6 Model 186, 16 logical CPUs and four Torch threads: 20 observations per mode, fixed execution order, OS file cache not flushed. They are not production API or end-to-end generation latency. Recorded peak working set was 2180.84 MiB. Stage percentiles are not additive. Zero unauthorized retrieval hits were recorded across all 20 executions and all three role-sensitive pairs in each mode; this is bounded evidence, not universal security certification.
+
+The ignored local evidence is [Step 112 report](../runtime/reports/step112_dev_20_four_way_diagnostic.json), [Step 114 analysis](../runtime/reports/step114_architecture_analysis.json), and [Step 114 owner packet](../runtime/reports/step114_owner_decision_packet.md). Their SHA-256 values are recorded below. These artifacts need not exist in CI. The Step 112 historical execution commit is `a9ca231409446cfa74fb380fdbbbad82948d5d39`; Step 114's analysis baseline is `be9b5e31b52e03875a9e0592f594cfaa19393155`. Step 116 verified their source binding against the current committed inputs at `d198c60fe8b78b7dde9cb5eb31287fc8ef2fdf28`. The historical Step 114 `AWAITING_OWNER_APPROVAL` status is preserved; this recorded owner decision resolves the v1 inclusion choice without rewriting historical artifacts.
+
+The following decision record is enforced by `tests/eval/test_reranker_decision.py`; it records approval and existing settings, and is not a new runtime configuration source.
+
+```json
+{
+  "decision_id": "step116_v1_retrieval",
+  "decision_date": "2026-11-22",
+  "owner_approved": true,
+  "approval_source": "explicit_project_owner_step116_instruction",
+  "deployment_baseline": "hybrid",
+  "production_reranker_enabled": false,
+  "evaluation_modes": ["bm25", "faiss", "hybrid", "hybrid_rerank"],
+  "retrieval_configuration_change_approved": false,
+  "budgets": {"bm25_top_k": 30, "faiss_top_k": 30, "rrf_k": 60, "hybrid_top_k": 20, "rerank_top_k": 20, "generation_evidence_max": 5},
+  "faiss_only_selection": "DEFERRED_UNTIL_AFTER_V1_PORTFOLIO_RELEASE",
+  "embedding_fine_tuning": "DEFERRED_UNTIL_AFTER_V1_PORTFOLIO_RELEASE",
+  "post_release_changes_require_separate_approval": true,
+  "step112_report_sha256": "ad38924f4cd46f28c95d891060a135756a6add125377d97c0fdb867a94b8eec0",
+  "step114_analysis_sha256": "f0aca0f80e2dc874a618abf737595383e095797b7aec559dd941168245c70d90",
+  "step114_packet_sha256": "44d62451a57fb75a3f2096cad521f9d9ff81a17519c91cfdc41712b6f5186fe3",
+  "dataset_sha256": "d3280f8570ca81f2f1b2c300e9e2c1385a1d5113f07d7f42d1f286331551dc5b",
+  "snapshot_id": "ddd98004d41bc5fcd9021078c036e3b07cbe94066f528a9bbbc44eef45453794",
+  "development_diagnostic_complete": true,
+  "contractual_frozen_ablation_complete": false,
+  "phase5_status": "OPEN"
+}
+```
+
+#### Step 116 Phase 5 exit audit
+
+The mandatory phase order in `AGENTS.md` §18 and §15 below is unchanged. Read the §15 exit wording together with the feature acceptance matrix in §11 and retrieval-readiness milestone in §17; passing development diagnostics does not waive a frozen-benchmark requirement. This table identifies inspected evidence; actual Step 116 test executions and results must be reported separately.
+
+| Required gate | Repository evidence and enforcing tests | Audit disposition |
+|---|---|---|
+| At least 20 documents ingested and validated (§17) | 26 documents, including 20 active and six superseded; `tests/integration/test_manifest_ingestion.py`, `tests/integration/test_corpus_manifest.py`, `tests/integration/test_ingestion_deterministic.py`. | Implemented evidence; requires passing applicable tests. |
+| Reproducible clean-build snapshot (§17) | `ddd98004d41bc5fcd9021078c036e3b07cbe94066f528a9bbbc44eef45453794`; independent ingestions into fresh databases in separate processes, directories and hash seeds in `tests/integration/test_ingestion_deterministic.py::test_independent_clean_builds_in_separate_processes`; historical results in `docs/phase3-closeout.md`. | Implemented evidence; requires passing the clean-build test. |
+| Development BM25 Recall@5 strictly greater than zero (§17) | Checked-in `eval/benchmarks/bm25_public_smoke.json`: isolated public-evidence Recall@5 = 1.0, one eligible seed case; `tests/eval/test_bm25_public_smoke.py`. Step 112's broader development BM25 result is 0.5476190476190476 over 14 positive cases. Keep those denominators distinct. | Measured milestone evidence; requires passing deterministic smoke regression. |
+| Role isolation and retrieval-dependent security (§15; §11) | `tests/security/test_role_scoping.py`, `tests/security/test_role_faiss_scoping.py`, `tests/security/test_hybrid_role_scoping.py`, `tests/security/test_published_index_scoping.py`, `tests/security/test_retrieval_api_auth.py`, `tests/security/test_retrieval_api_scoping.py`, `tests/security/test_offline_reranking_scoping.py`, and `tests/security/test_dev_eval_role_scoping.py`; snapshot/publication tests enforce fail-closed bindings. | Implemented bounded coverage; requires passing security regressions. No claim about future generation/source/UI features. |
+| Four-way development evidence (§15) | Historical Step 112 report and Step 114 review; deterministic checks in `tests/eval/test_dev_20_four_way_contract.py`, `tests/eval/test_dev_four_way_diagnostic.py`, and `tests/eval/test_dev_retrieval_architecture_review.py`. | Exploratory development diagnostics complete; all four modes remain available. |
+| Human-approved inclusion decision justified on development metrics (§15; §11) | The Step 116 owner decision above, enforced by `tests/eval/test_reranker_decision.py`, retains Hybrid and disables production reranking. | Owner approval recorded; runtime behavior must match the decision. |
+| Contractual retrieval ablation (§11) | Required: four configurations on the frozen benchmark, machine-readable `eval/report.json`, enforced by `tests/eval/test_ablation.py`. At the Step 116 baseline both files are absent and `make eval-retrieval` prints a Phase 7 placeholder and exits 1. Existing diagnostics explicitly have `full_ablation_complete: false`. | **NOT MET. Phase 5 remains OPEN.** A passing deterministic suite cannot substitute for this missing acceptance evidence. |
+
+The definite remaining Phase 5 blocker is the contractual frozen-benchmark four-way ablation, its report and enforcing test, and an executable evaluation target. §15 schedules full frozen evaluation in Phase 7 while §11 places this ablation in the retrieval acceptance matrix; this sequencing tension is reported, not resolved by silently reclassifying the gate. Do not advance to Phase 6 until the actual Phase 5 gates pass, or the owner separately approves an explicit contract/phase-order amendment under §18. Step 116 approves neither a waiver nor such an amendment, and accesses no held-out cases. Future generation, citations, refusal, source access and UI gates remain pending; they are not reported as passed by this audit.
+
+
 ### Exact model versions
 
 Capture pinned embedding and reranker model revisions and the installed Ollama model digest in the reproducibility manifest. Fail validation on unapproved model changes. Do not fabricate a digest; the first approval records the actual installed digest before a run can be declared reproducible.
