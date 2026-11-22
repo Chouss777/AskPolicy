@@ -311,12 +311,14 @@ Do not reorder:
 2. **Corpus:** two or three representative policies, ACLs, first manually verified development questions.
 3. **Ingestion:** Markdown → validation → SQLite → reproducible snapshot hash.
 4. **Security:** JWT, RBAC, role-scoped index-selection contract, first adversarial tests.
-5. **Retrieval:** BM25 → normalized FAISS → RRF → conditional reranking and ablations.
+5. **Retrieval:** BM25 → normalized FAISS → RRF → conditional reranking and ablations. Exit: the full approved 20-case development four-way retrieval comparison (BM25S, E5/FAISS, Hybrid RRF, Hybrid + CE), reproducible retrieval-readiness under `docs/decisions.md` §17, role-isolation/security gates, and documented owner-approved reranker inclusion decision pass. Closure requires human review; development evidence does not complete frozen evaluation.
 6. **Generation:** Ollama → Pydantic → validated citations → controlled refusals.
-7. **Full evaluation:** query cases, ablations, security attacks, metrics, error analysis.
+7. **Full evaluation:** query cases, ablations, security attacks, metrics, error analysis. Exit: all 60 frozen held-out cases complete the four-way retrieval ablation (BM25S, E5/FAISS, Hybrid RRF, Hybrid + CE), `make eval-retrieval` succeeds, `tests/eval/test_ablation.py` passes, and `eval/report.json` is generated; end-to-end generation, citation, refusal, adversarial security, multilingual analysis, measured latency, provenance and reproducibility requirements pass. All mandatory security and release gates remain intact.
 8. **Delivery:** Docker Compose, Streamlit, CI, README, report, demo video.
 
 Current-phase acceptance gates must pass before advancing. Future-phase tests may be marked incomplete but not reported as passing; no skipped or xfailed release-critical tests. Treat calendar estimates as planning guidance. Apply the measured retrieval-readiness milestone and owner-approved scope-change procedure in `docs/decisions.md` §17.
+
+Step 117's explicit owner approval in `docs/decisions.md` §17 changes only evaluation-gate sequencing: 20 development cases for Phase 5, all 60 frozen held-out cases for Phase 7. Full scope remains 80 executions; no reduced-scope fallback is activated. The Step 116 Hybrid/CE decision, four evaluation configurations, locked architecture and all security, citation, end-to-end and reproducibility requirements remain unchanged. A completed development diagnostic is not a completed frozen evaluation. This amendment does not automatically close Phase 5 or authorize a phase transition. Enforcement: `tests/eval/test_phase_gate_sequencing_contract.py`.
 
 Enforcement: phase-specific tests in `docs/decisions.md` §11 and human review using `docs/codex-checklist.md`.
 

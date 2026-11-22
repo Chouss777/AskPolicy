@@ -131,6 +131,12 @@ The following decision record is enforced by `tests/eval/test_reranker_decision.
 
 #### Step 116 Phase 5 exit audit
 
+**Historical audit, retained for provenance.** The Step 116 decision record's `phase5_status: OPEN`, the dispositions below, and the sequencing tension describe the contract at commit `6e4c9878f75801f051d90db4d5385abe39c421e1`. The Step 117 owner-approved sequencing clarification in §§11, 15 and 17 supersedes the interpretation that frozen ablation blocks Phase 5. The Hybrid/CE architecture decision remains unchanged. This history does not declare the current Phase 5 closed.
+
+The Phase 5 exit wording audited in Step 116 was:
+
+> Exit: role isolation passes, 4-way ablation recorded, inclusion decision justified on dev metrics.
+
 The mandatory phase order in `AGENTS.md` §18 and §15 below is unchanged. Read the §15 exit wording together with the feature acceptance matrix in §11 and retrieval-readiness milestone in §17; passing development diagnostics does not waive a frozen-benchmark requirement. This table identifies inspected evidence; actual Step 116 test executions and results must be reported separately.
 
 | Required gate | Repository evidence and enforcing tests | Audit disposition |
@@ -403,6 +409,20 @@ Additionally report invalid citation counts, unauthorized citations, answer corr
 
 All test paths are relative to repository root. Every feature is complete only after its enforcing test **passes normally**, not merely via a demo, skip, or expected failure.
 
+### Phase 5 — Development retrieval gate
+
+Under the limited Step 117 owner approval in §17, Phase 5 requires the full approved **20 development query-role cases** in a **four-way retrieval comparison** across all four configurations: **BM25S, E5/FAISS, Hybrid RRF, and Hybrid + CE**. Record valid, reproducible development evidence using identical snapshot, labels, roles and query conditions across configurations, with the existing metric definitions, model revisions, latency measurements and provenance requirements intact.
+
+Phase 5 also requires passing retrieval-readiness under §17 (at least 20 validated documents, a reproducible clean-build snapshot hash, and development BM25 Recall@5 strictly greater than 0), role-isolation/security evidence with zero unauthorized retrieval in applicable executed checks, and a documented, owner-approved reranker inclusion decision justified by development quality and measured latency. All applicable current-phase tests must pass normally. Enforcement: `tests/eval/test_dev_20_four_way_contract.py`, `tests/eval/test_reranker_decision.py`, `tests/eval/test_phase_gate_sequencing_contract.py`, and the applicable ingestion, snapshot and security tests named below.
+
+### Phase 7 — Frozen retrieval gate
+
+The existing **Retrieval ablation** criterion in the table below remains mandatory as the Phase 7 **four-way retrieval ablation**: execute all **60 frozen held-out cases** under the full scope through all four configurations, **BM25S, E5/FAISS, Hybrid RRF, and Hybrid + CE**, with identical snapshot, labels, roles and query conditions across configurations. `make eval-retrieval` must execute successfully, `tests/eval/test_ablation.py` must be implemented and pass normally, and the run must generate machine-readable `eval/report.json`.
+
+Phase 7 retains end-to-end generation, citation integrity and semantic citation support, refusal accuracy, adversarial security testing, multilingual analysis, error analysis, measured p50/p95 latency on declared hardware, provenance and reproducibility evaluation under §§10, 12, 13 and 23. All existing security thresholds and release requirements remain mandatory. Full-scope evaluation remains **80 executions: 20 development + 60 frozen held-out**, with **48 answerable, 16 unanswerable and 16 role-sensitive executions**. No reduced-scope fallback is activated.
+
+A completed development diagnostic is not a completed frozen evaluation. Do not relabel development-only evidence, set `full_ablation_complete` to true on that basis, waive a mandatory test, or report pending Phase 7 requirements as passed. The four evaluation configurations remain available even though the Step 116 v1 decision disables production Cross-Encoder reranking. Enforcement of the gate distinction: `tests/eval/test_phase_gate_sequencing_contract.py`.
+
 | Feature | Verifiable acceptance criteria | Enforcing test |
 |---|---|---|
 | Ingestion determinism | Same canonical input/config produces same snapshot hash across two clean builds. | `tests/integration/test_ingestion_deterministic.py` |
@@ -419,6 +439,7 @@ All test paths are relative to repository root. Every feature is complete only a
 | Citation invalid | Invented ID, quote mismatch, and out-of-set citation rejected. | `tests/unit/test_citation_validator.py` |
 | Fail-closed generation | Invalid citation produces refusal, never partial answer. | `tests/integration/test_fail_closed.py` |
 | Reranker decision | Dev Recall@5 delta and measured p95 recorded; activation matches approved decision. | `tests/eval/test_reranker_decision.py` |
+| Development retrieval comparison (Phase 5) | All 20 approved development cases, four configurations, reproducible evidence, retrieval-readiness and security gates, and owner-approved inclusion decision pass. | `tests/eval/test_dev_20_four_way_contract.py`, `tests/eval/test_reranker_decision.py`, `tests/eval/test_phase_gate_sequencing_contract.py` |
 | Retrieval ablation | Four configs run on frozen benchmark with machine-readable `eval/report.json`. | `tests/eval/test_ablation.py` |
 | End-to-end | Full: 60 held-out cases; reduced: 45; security leakage 0, invalid displayed citations 0, p95 recorded. | `tests/eval/test_e2e.py` |
 | Streamlit cache isolation | No user-specific answer/source content persists across role switch. | `tests/integration/test_ui_cache_isolation.py` |
@@ -517,11 +538,11 @@ Do not reorder these eight phases:
 
 **Phase 4 — Security:** signed JWT, verified grants, active read role, deny-by-default and role-index selection interfaces, first attack checks. Exit: auth/grant/default-deny tests pass; retrieval-dependent integration security tests become mandatory once retrieval exists.
 
-**Phase 5 — Retrieval:** BM25 → normalized FAISS → RRF → conditional reranker and ablations. Exit: role isolation passes, 4-way ablation recorded, inclusion decision justified on dev metrics.
+**Phase 5 — Retrieval:** BM25 → normalized FAISS → RRF → conditional reranker and ablations. Exit: the full approved 20-case development four-way retrieval comparison, reproducible retrieval-readiness under §17, role-isolation/security gates, and documented owner-approved reranker inclusion decision pass under §11. Closure requires human review; development evidence does not complete Phase 7's frozen evaluation.
 
 **Phase 6 — Generation:** Ollama, Pydantic output, citations, refusal. Exit: valid citations pass, invalid citations refuse, structure and ACL tests pass.
 
-**Phase 7 — Full Evaluation:** active-scope frozen cases, ablations, adversarial suite, multilingual breakdown, error analysis and latency. Exit: measured reproducible report and mandatory security gates pass.
+**Phase 7 — Full Evaluation:** active-scope frozen cases, ablations, adversarial suite, multilingual breakdown, error analysis and latency. Exit: all 60 frozen held-out cases complete the mandatory four-way retrieval ablation under §11, `make eval-retrieval` succeeds, `tests/eval/test_ablation.py` passes, and `eval/report.json` is generated; end-to-end generation, citation, refusal, adversarial security, multilingual analysis, measured latency, provenance and reproducibility requirements pass. All mandatory security and portfolio-release gates remain intact.
 
 **Phase 8 — Delivery:** Docker, Streamlit, CI, README, architecture, threat model, evaluation report, three-minute demo. Exit: clean installation, tested API/UI, no secrets, actual results.
 
@@ -549,6 +570,16 @@ The measured retrieval-readiness milestone in §17 is mandatory before Phase 5 c
 ## 17. Retrieval Readiness and Optional Scope Fallback
 
 **Owner decision (Step 59).** The project owner approved milestone-based progression. This supersedes the former end-of-Week-1 rule that automatically reduced scope when any of the three measurements failed. The measurement thresholds remain mandatory.
+
+### Step 117 owner approval — evaluation-gate sequencing only
+
+The project owner explicitly approved this narrow amendment after Step 116 was committed at `6e4c9878f75801f051d90db4d5385abe39c421e1`: Phase 5 may close after its approved 20-case development four-way retrieval comparison, reproducible retrieval-readiness and security gates, and documented owner-approved reranker inclusion decision pass. Phase 7 must still perform the full frozen 60-case four-way retrieval ablation through successful `make eval-retrieval`, passing `tests/eval/test_ablation.py`, and machine-readable `eval/report.json`, with all existing end-to-end, security, citation, refusal, latency, provenance and reproducibility requirements mandatory.
+
+This approval is limited to phase sequencing. It resolves the historical Step 116 interpretation in §2 without waiving the frozen ablation criterion or changing the eight-phase order. It is separate from Step 59 scope governance, Step 90/103 model-runtime approvals and Step 116's architecture decision. Hybrid RRF remains selected for v1, production Cross-Encoder remains disabled, and BM25S, E5/FAISS, Hybrid RRF and Hybrid + CE remain available for evaluation. FAISS-only reconsideration and embedding fine-tuning remain deferred until after the v1 portfolio release and require separate approval.
+
+Full scope remains **80 query-role executions: 20 development + 60 frozen held-out; 48 answerable + 16 unanswerable + 16 role-sensitive executions**. No reduced-scope fallback is activated. No evaluation scope reduction, label change, architecture/configuration change, or skipped/xfail mandatory test is authorized. All three retrieval-readiness conditions below remain unchanged. The governance in §18, testing policy in §20 and release acceptance in §23 remain unchanged.
+
+A phase advances only after its applicable acceptance gates pass. Step 117 authorizes neither automatic Phase 5 closure nor a phase transition or Phase 6 implementation. After an evidence-backed audit, report `PHASE 5 READY FOR HUMAN CLOSURE REVIEW` only if every applicable Phase 5 gate passes; otherwise report `PHASE 5 OPEN` and the precise missing gate. Phase 7 remains pending until its own gates execute and pass; development-only diagnostics must never be reported as completed frozen evaluation. Enforcement: `tests/eval/test_phase_gate_sequencing_contract.py`.
 
 ### Retrieval-readiness milestone
 
