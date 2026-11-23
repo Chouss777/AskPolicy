@@ -156,6 +156,8 @@ The definite remaining Phase 5 blocker is the contractual frozen-benchmark four-
 
 Capture pinned embedding and reranker model revisions and the installed Ollama model digest in the reproducibility manifest. Fail validation on unapproved model changes. Do not fabricate a digest; the first approval records the actual installed digest before a run can be declared reproducible.
 
+The explicit Step 125 owner approval pins the existing Ollama generator; see [the approval record in §18](#step-125-generator-digest-approval). An observed installed digest alone is not approval.
+
 Step 103 verified `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` revision `1427fd652930e4ba29e8149678df786c240d8825` against the actual provisioned files and completed a real CPU smoke.
 
 | Verified file | Bytes | SHA-256 |
@@ -461,6 +463,7 @@ A completed development diagnostic is not a completed frozen evaluation. Do not 
 | UI/API boundary | Streamlit calls HTTP API, never retrieval DB or indexes. | `tests/integration/test_ui_api_boundary.py` |
 | Docker topology | Required services, ports and named volumes configured. | `tests/integration/test_compose_contract.py` |
 | Ollama readiness | Distinguish daemon, installed model, and bounded inference readiness. | `tests/integration/test_ollama_readiness.py` |
+| Generator approval | Trusted configuration constructs the existing `GeneratorApproval` with the exact owner-approved model, full digest and documented reference; mismatched, abbreviated or alternate overrides are rejected, and installed-digest readiness remains fail-closed. | `tests/unit/test_model_approval.py`, `tests/unit/test_ollama_client.py`, `tests/integration/test_ollama_readiness.py` |
 | Makefile targets | `setup`, `ingest`, `test`, `eval-retrieval`, `eval-security`, `eval-generation`, `run` exist and perform documented actions. | `tests/integration/test_make_targets.py` |
 | Repository contract | Required files present; secrets and runtime artifacts excluded. | `tests/integration/test_repository_contract.py` |
 | Locked stack | Declared direct dependencies comply with approved stack and approval policy. | `tests/unit/test_stack_contract.py` |
@@ -642,6 +645,24 @@ At baseline `cb1691a`, `uv run --locked --no-sync python -B -c "from transformer
 ### Step 103 owner approval — selected reranker checkpoint
 
 The owner approved the exact reranker revision and five verified artifacts recorded in §2, external provisioning, the offline CPU loader and bounded real smoke scoring. Existing dependencies continue to apply. Step 103 rejects overlength pairs without truncation, splitting or aggregation. Production reranker activation and production overflow handling require separate approval.
+
+<a id="step-125-generator-digest-approval"></a>
+
+### Step 125 owner approval — existing generator digest
+
+On **2026-11-22 (November 22, 2026)**, the project owner explicitly approved this exact checkpoint for AskPolicy production integration:
+
+| Approval field | Approved value |
+|---|---|
+| Model | `qwen3:4b-instruct` |
+| Full SHA-256 digest | `0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0` |
+| Approval reference | `docs/decisions.md#step-125-generator-digest-approval` |
+
+This records the explicit Step 125 owner decision, not approval inferred from daemon metadata or a benchmark. It pins the existing approved generator; it does not switch the model. `qwen3.5:4b` remains unapproved for production. No embedding change, production reranker activation, retrieval architecture change or RAG orchestration is authorized by this decision.
+
+`src/askpolicy/generation/approved_model.py` provides trusted server-side configuration using the existing `GeneratorApproval` dataclass and the existing Ollama client's model constant. Supplied model, digest and approval-reference values are consistency checks against this exact record, never an alternate model-selection mechanism. Reject differing values, including abbreviated digests, without logging their contents. Do not derive approval from request data, environment overrides or observed model metadata. The caller must explicitly supply this trusted configuration to the existing client; absent approval, missing models and installed-digest mismatches continue to fail closed. No client default or readiness/inference safeguard is changed.
+
+Acceptance and enforcement: `tests/unit/test_model_approval.py` verifies the exact binding, the existing documented reference, immutable approval records and override rejection; `tests/unit/test_ollama_client.py` and `tests/integration/test_ollama_readiness.py` retain the client and readiness guarantees. Recording approval does not establish inference readiness, citation security or completion of Phase 6/7.
 
 ---
 

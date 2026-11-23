@@ -74,6 +74,8 @@ Do not expand scope without explicit human approval. Enforcement: `tests/integra
 
 Pin the exact embedding and reranker revisions; pin and record the installed Ollama model digest. Record the versions and digest in evaluation manifests; reject unapproved mismatches.
 
+On 2026-11-22, the owner explicitly approved `qwen3:4b-instruct` with full SHA-256 digest `0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0` for production integration. The trusted configuration in `src/askpolicy/generation/approved_model.py` binds the existing `GeneratorApproval` type to [the Step 125 approval record](docs/decisions.md#step-125-generator-digest-approval). Reject model, digest or approval-reference overrides that differ from this record. This pins the existing generator only: `qwen3.5:4b` remains unapproved for production; embeddings, production reranking and retrieval architecture are unchanged. Enforcement: `tests/unit/test_model_approval.py`, `tests/unit/test_ollama_client.py`, `tests/integration/test_ollama_readiness.py`.
+
 The owner approved the E5 CPU runtime pins in Step 90 under `docs/decisions.md` §18. Step 89 confirmed that FAISS and NumPy could not run E5 on their own. Imports failed with `ModuleNotFoundError: No module named 'transformers'` and `ModuleNotFoundError: No module named 'torch'`. This approval preserves the architecture and scope and permits only the recorded runtime pins and E5 revision. Dependency or model substitutions require separate approval.
 
 The reranker is **conditional**: enable in the deployed pipeline only after development-set retrieval quality and measured latency justify it.
